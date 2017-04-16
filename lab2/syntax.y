@@ -98,6 +98,12 @@ ExtDef : Specifier ExtDecList SEMI {
 	appendChild($$, $2);
 	appendChild($$, $3);
 }
+	| Specifier FunDec SEMI {
+	$$ = node(EXTDEF);
+	appendChild($$, $1);
+	appendChild($$, $2);
+	appendChild($$, $3);
+}
 	| Specifier FunDec error DefList StmtList RC {
 	yyerrok;
 	$$ = node(EXTDEF);

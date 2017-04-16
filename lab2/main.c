@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
 	yyrestart(f);
 	yyparse();
 	if (!gError) {
-		printTree(gTree, 0);
+		// TODO: semantic analysis
 	}
 	freeTree(gTree);
 	freeTable(gIdTable);
