@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
 		perror(argv[1]);
 		return 1;	
 	}
-	gIdTable = createIdTable(1);
+	gIdTable = createIdTable(64);
 	//yydebug = 1;
 	yyrestart(f);
 	yyparse();
