@@ -4,6 +4,8 @@
 #include "def.h"
 #include "trie.h"
 
+typedef TrieNode SymbolTable;
+
 typedef enum SymbolTableItemType {
 	BASIC, ARRAY, STRUCTDEF, STRUCT, FUNCTION
 } SymbolTableItemType;
@@ -21,7 +23,7 @@ typedef struct SymbolTableItem {
 	SymbolType type;
 } SymbolTableItem;
 
-TrieNode* initSymbolTable();
+SymbolTable* initSymbolTable();
 
 #endif
 

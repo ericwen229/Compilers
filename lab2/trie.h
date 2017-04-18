@@ -11,10 +11,10 @@ typedef struct TrieNode {
 	void* item;
 } TrieNode;
 
-TrieNode* initNode();
-void* query(TrieNode* node, char* str);
-void insert(TrieNode* trie, char* str, void* item);
-void print(TrieNode* trie);
+TrieNode* initTrieNode();
+void* queryTrie(TrieNode* node, char* str);
+void insertTrie(TrieNode* trie, char* str, void* item);
+void printTrie(TrieNode* trie);
 
 #endif
 

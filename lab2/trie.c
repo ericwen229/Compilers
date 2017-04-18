@@ -4,7 +4,7 @@
 
 #include "trie.h"
 
-TrieNode* initNode() {
+TrieNode* initTrieNode() {
 	TrieNode* node = (TrieNode*)malloc(sizeof(TrieNode));
 	int i = 0;
 	for (i = 0; i < BRANCH_NUM; ++ i) {
@@ -50,7 +50,7 @@ char index2Ch(int index) {
 	}
 }
 
-void* query(TrieNode* node, char* str) {
+void* queryTrie(TrieNode* node, char* str) {
 	int i = 0;
 	TrieNode* currNode = node;
 	for (i = 0; i < strlen(str); ++ i) {
@@ -68,13 +68,13 @@ void* query(TrieNode* node, char* str) {
 	}
 }
 
-void insert(TrieNode* node, char* str, void* item) {
+void insertTrie(TrieNode* node, char* str, void* item) {
 	int i = 0;
 	TrieNode* currNode = node;
 	for (i = 0; i < strlen(str); ++ i) {
 		int nextChildIndex = ch2Index(str[i]);
 		if (currNode->child[nextChildIndex] == NULL) {
-			currNode->child[nextChildIndex] = initNode();
+			currNode->child[nextChildIndex] = initTrieNode();
 		}
 		currNode = currNode->child[nextChildIndex];
 	}
@@ -82,7 +82,7 @@ void insert(TrieNode* node, char* str, void* item) {
 	currNode->item = item;
 }
 
-void _print(TrieNode* trie, int level) {
+void _printTrie(TrieNode* trie, int level) {
 	int i = 0;
 	for (i = 0; i < BRANCH_NUM; ++ i) {
 		if (trie->child[i] != NULL) {
@@ -95,12 +95,12 @@ void _print(TrieNode* trie, int level) {
 				putchar('*');
 			}
 			putchar('\n');
-			_print(trie->child[i], level + 1);
+			_printTrie(trie->child[i], level + 1);
 		}
 	}
 }
 
-void print(TrieNode* trie) {
-	_print(trie, 0);
+void printTrie(TrieNode* trie) {
+	_printTrie(trie, 0);
 }
 
