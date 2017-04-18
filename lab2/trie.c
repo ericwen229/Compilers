@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "trie.h"
+#include "symboltable.h"
 
 TrieNode* initTrieNode() {
 	TrieNode* node = (TrieNode*)malloc(sizeof(TrieNode));
@@ -83,6 +84,15 @@ TrieNode* insertTrie(TrieNode* node, char* str, void* type) {
 	return currNode;
 }
 
+void printType(void* _type) {
+	if (_type == NULL) return;
+	SymbolTableType* type = (SymbolTableType*)_type;
+	if (type->itemType == S_BASIC) {
+		printf("[BASIC]");
+	}
+	// TODO: other types of type
+}
+
 void _printTrie(TrieNode* trie, int level) {
 	int i = 0;
 	for (i = 0; i < BRANCH_NUM; ++ i) {
@@ -94,6 +104,7 @@ void _printTrie(TrieNode* trie, int level) {
 			putchar(index2Ch(i));
 			if (trie->child[i]->isEnd) {
 				putchar('*');
+				printType(trie->child[i]->type);
 			}
 			putchar('\n');
 			_printTrie(trie->child[i], level + 1);

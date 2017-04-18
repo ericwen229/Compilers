@@ -27,8 +27,8 @@ int main(int argc, char* argv[]) {
 	yyrestart(f);
 	yyparse();
 	if (!gError) {
-		printSymbolTable(gSymbolTable);
 		semanticAnalysis(gTree, gSymbolTable);
+		printSymbolTable(gSymbolTable);
 	}
 	freeTree(gTree);
 	return 0;
