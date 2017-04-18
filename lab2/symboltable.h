@@ -15,12 +15,19 @@ struct SymbolTableType;
 
 typedef struct ArrayType {
 	int len;
-	struct SymbolTableType *elementType;
+	struct SymbolTableType* elementType;
 } ArrayType;
+
+typedef struct StructType {
+	char* name;
+	struct SymbolTableType* fieldType;
+	struct StructType* nextField;
+} StructType;
 
 typedef union SymbolType {
 	BasicType basicType;
 	ArrayType arrayType;
+	StructType structType;
 } SymbolType;
 
 typedef struct SymbolTableType {
