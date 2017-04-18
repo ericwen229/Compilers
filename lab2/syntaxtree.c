@@ -2,9 +2,6 @@
 #include <stdio.h>
 
 #include "syntaxtree.h"
-#include "idtable.h"
-
-extern IdTable* gIdTable;
 
 SyntaxTreeNode* createTerminalNode(NodeType type, Attribute attr, int lineno) {
 	SyntaxTreeNode *newNode = (SyntaxTreeNode*)malloc(sizeof(SyntaxTreeNode));

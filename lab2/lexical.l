@@ -9,11 +9,9 @@
 	#include "def.h"
 	#include "syntax.tab.h"
 	#include "syntaxtree.h"
-	// #include "idtable.h"
 	#include "symboltable.h"
 
 	extern bool gError;
-	// extern IdTable* gIdTable;
 	extern SymbolTable gSymbolTable;
 
 	static Attribute attr;
@@ -245,9 +243,6 @@ UNKNOWN		.
 
 {ID}		{
 	log_a("ID");
-	// char* buf = (char*)malloc(strlen(yytext) + 1);
-	// strcpy(buf, yytext);
-	// attr.id = insertId(gIdTable, buf);
 	attr.id = insertSymbol(gSymbolTable, yytext, NULL);
 	yylval = node_a(ID);
 	return ID; }

@@ -4,7 +4,6 @@
 #include "def.h"
 #include "trie.h"
 #include "syntaxtree.h"
-#include "idtable.h"
 
 typedef TrieNode* SymbolTable;
 

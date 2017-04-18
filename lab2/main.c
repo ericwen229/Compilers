@@ -3,7 +3,6 @@
 
 #include "def.h"
 #include "syntaxtree.h"
-#include "idtable.h"
 #include "symboltable.h"
 #include "semantic.h"
 
@@ -11,7 +10,6 @@ extern int yydebug;
 
 bool gError = false;
 
-// IdTable* gIdTable = NULL;
 SymbolTable gSymbolTable = NULL;
 SyntaxTreeNode* gTree = NULL;
 
@@ -25,7 +23,6 @@ int main(int argc, char* argv[]) {
 		perror(argv[1]);
 		return 1;	
 	}
-	// gIdTable = createIdTable(128);
 	gSymbolTable = initSymbolTable();
 	yyrestart(f);
 	yyparse();
@@ -34,6 +31,5 @@ int main(int argc, char* argv[]) {
 		semanticAnalysis(gTree, gSymbolTable);
 	}
 	freeTree(gTree);
-	// freeTable(gIdTable);
 	return 0;
 }
