@@ -163,10 +163,10 @@ UNKNOWN		.
 {TYPE}		{
 	log_a("TYPE");
 	if (yytext[0] == 'i') {
-		attr.typeType = TYPEINT;
+		attr.typeType = T_INT;
 	}
 	else {
-		attr.typeType = TYPEFLOAT;	
+		attr.typeType = T_FLOAT;	
 	}
 	yylval = node_a(TYPE);
 	return TYPE; }

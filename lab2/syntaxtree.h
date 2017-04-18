@@ -25,15 +25,15 @@ typedef enum RelopType {
 	LT, GT, LE, GE, EQ, NE
 } RelopType;
 
-typedef enum TypeType {
-	TYPEINT, TYPEFLOAT
-} TypeType;
+typedef enum BasicType {
+	T_INT, T_FLOAT
+} BasicType;
 
 typedef union Attribute {
 	TrieNode* id;
 	int intValue;
 	float floatValue;
-	TypeType typeType;
+	BasicType typeType;
 	RelopType relopType;
 } Attribute;
 

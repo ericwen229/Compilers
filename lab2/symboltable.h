@@ -11,10 +11,6 @@ typedef enum SymbolTableItemType {
 	S_BASIC, S_ARRAY, S_STRUCTDEF, S_STRUCT, S_FUNCTION
 } SymbolTableItemType;
 
-typedef enum BasicType {
-	S_BASIC_INT, S_BASIC_FLOAT
-} BasicType;
-
 typedef union SymbolType {
 	BasicType basicType;
 } SymbolType;
