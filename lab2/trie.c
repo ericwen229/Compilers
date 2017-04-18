@@ -68,7 +68,7 @@ void* queryTrie(TrieNode* node, char* str) {
 	}
 }
 
-void insertTrie(TrieNode* node, char* str, void* item) {
+TrieNode* insertTrie(TrieNode* node, char* str, void* item) {
 	int i = 0;
 	TrieNode* currNode = node;
 	for (i = 0; i < strlen(str); ++ i) {
@@ -80,6 +80,7 @@ void insertTrie(TrieNode* node, char* str, void* item) {
 	}
 	currNode->isEnd = true;
 	currNode->item = item;
+	return currNode;
 }
 
 void _printTrie(TrieNode* trie, int level) {

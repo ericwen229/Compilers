@@ -4,8 +4,8 @@ SymbolTable initSymbolTable() {
 	return initTrieNode();
 }
 
-void insertSymbol(SymbolTable table, char* symbol, SymbolTableItem* item) {
-	insertTrie(table, symbol, item);
+TrieNode* insertSymbol(SymbolTable table, char* symbol, SymbolTableItem* item) {
+	return insertTrie(table, symbol, item);
 }
 
 void printSymbolTable(SymbolTable table) {

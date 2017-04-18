@@ -13,7 +13,7 @@ typedef struct TrieNode {
 
 TrieNode* initTrieNode();
 void* queryTrie(TrieNode* node, char* str);
-void insertTrie(TrieNode* trie, char* str, void* item);
+TrieNode* insertTrie(TrieNode* trie, char* str, void* item);
 void printTrie(TrieNode* trie);
 
 #endif

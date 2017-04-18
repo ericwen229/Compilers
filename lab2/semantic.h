@@ -2,10 +2,10 @@
 #define __SEMANTIC_H__
 
 #include "syntaxtree.h"
-#include "idtable.h"
+// #include "idtable.h"
 #include "symboltable.h"
 
-void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, IdTable* idTable, SymbolTable symbolTable);
+void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, SymbolTable symbolTable);
 
 #endif
 

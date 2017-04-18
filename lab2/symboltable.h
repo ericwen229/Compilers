@@ -9,11 +9,11 @@
 typedef TrieNode* SymbolTable;
 
 typedef enum SymbolTableItemType {
-	BASIC, ARRAY, STRUCTDEF, STRUCT, FUNCTION
+	S_BASIC, S_ARRAY, S_STRUCTDEF, S_STRUCT, S_FUNCTION
 } SymbolTableItemType;
 
 typedef enum BasicType {
-	INT, FLOAT
+	S_BASIC_INT, S_BASIC_FLOAT
 } BasicType;
 
 typedef union SymbolType {
@@ -26,7 +26,7 @@ typedef struct SymbolTableItem {
 } SymbolTableItem;
 
 SymbolTable initSymbolTable();
-void insertSymbol(SymbolTable table, char* symbol, SymbolTableItem* item);
+TrieNode* insertSymbol(SymbolTable table, char* symbol, SymbolTableItem* item);
 void printSymbolTable(SymbolTable table);
 
 #endif

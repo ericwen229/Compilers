@@ -11,7 +11,8 @@ extern int yydebug;
 
 bool gError = false;
 
-IdTable* gIdTable = NULL;
+// IdTable* gIdTable = NULL;
+SymbolTable gSymbolTable = NULL;
 SyntaxTreeNode* gTree = NULL;
 
 void yyrestart(FILE*);
@@ -24,15 +25,15 @@ int main(int argc, char* argv[]) {
 		perror(argv[1]);
 		return 1;	
 	}
-	gIdTable = createIdTable(128);
+	// gIdTable = createIdTable(128);
+	gSymbolTable = initSymbolTable();
 	yyrestart(f);
 	yyparse();
 	if (!gError) {
-		SymbolTable symbolTable = initSymbolTable();
-		semanticAnalysis(gTree, gIdTable, symbolTable);
-		printSymbolTable(symbolTable);
+		printSymbolTable(gSymbolTable);
+		semanticAnalysis(gTree, gSymbolTable);
 	}
 	freeTree(gTree);
-	freeTable(gIdTable);
+	// freeTable(gIdTable);
 	return 0;
 }

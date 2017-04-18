@@ -3,20 +3,19 @@
 
 #include "semantic.h"
 
-void handleLocalDefinition(SyntaxTreeNode* syntaxTreeNode, IdTable* idTable, SymbolTable symbolTable) {
-	printf("local definition!\n");
+void handleLocalDefinition(SyntaxTreeNode* syntaxTreeNode, SymbolTable symbolTable) {
 }
 
-void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, IdTable* idTable, SymbolTable symbolTable) {
+void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, SymbolTable symbolTable) {
 	if (syntaxTreeNode->type == N_EXTDEF) { // external definition
 		// TODO: insert
 	}
 	else if (syntaxTreeNode->type == N_DEF) { // local definition
-		handleLocalDefinition(syntaxTreeNode, idTable, symbolTable);
+		handleLocalDefinition(syntaxTreeNode, symbolTable);
 	}
 	SyntaxTreeNode* child = syntaxTreeNode->firstChild;
 	while (child != NULL) {
-		semanticAnalysis(child, idTable, symbolTable);
+		semanticAnalysis(child, symbolTable);
 		child = child->nextSibling;
 	}
 }

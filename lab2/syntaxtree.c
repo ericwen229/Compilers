@@ -54,7 +54,7 @@ void appendChild(SyntaxTreeNode* parent, SyntaxTreeNode* child) {
 	currChild->nextSibling = child;
 }
 
-void printTree(SyntaxTreeNode* tree, int level) {
+/* void printTree(SyntaxTreeNode* tree, int level) {
 
 	static char* nodeName[] = {
 		"SEMI", "COMMA", "ASSIGNOP", "RELOP",
@@ -125,5 +125,5 @@ void printTree(SyntaxTreeNode* tree, int level) {
 		}
 		putchar('\n');
 	}
-}
+} */
 

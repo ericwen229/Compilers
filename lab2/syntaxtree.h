@@ -1,6 +1,8 @@
 #ifndef __SYNTAXTREE_H__
 #define __SYNTAXTREE_H__
 
+#include "trie.h"
+
 typedef enum NodeType {
 	N_SEMI, N_COMMA, N_ASSIGNOP, N_RELOP,
 	N_PLUS, N_MINUS, N_STAR, N_DIV,
@@ -28,7 +30,7 @@ typedef enum TypeType {
 } TypeType;
 
 typedef union Attribute {
-	int id;
+	TrieNode* id;
 	int intValue;
 	float floatValue;
 	TypeType typeType;
@@ -47,7 +49,7 @@ SyntaxTreeNode* createTerminalNode(NodeType type, Attribute attr, int lineno);
 SyntaxTreeNode* createNode(NodeType type);
 void freeTree(SyntaxTreeNode* tree);
 void appendChild(SyntaxTreeNode* parent, SyntaxTreeNode* child);
-void printTree(SyntaxTreeNode* tree, int level);
+// void printTree(SyntaxTreeNode* tree, int level);
 
 #endif
 
