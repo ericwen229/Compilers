@@ -7,21 +7,21 @@
 
 typedef TrieNode* SymbolTable;
 
-typedef enum SymbolTableItemType {
+typedef enum SymbolTableTypeType {
 	S_BASIC, S_ARRAY, S_STRUCTDEF, S_STRUCT, S_FUNCTION
-} SymbolTableItemType;
+} SymbolTableTypeType;
 
 typedef union SymbolType {
 	BasicType basicType;
 } SymbolType;
 
-typedef struct SymbolTableItem {
-	SymbolTableItemType itemType;
+typedef struct SymbolTableType {
+	SymbolTableTypeType itemType;
 	SymbolType type;
-} SymbolTableItem;
+} SymbolTableType;
 
 SymbolTable initSymbolTable();
-TrieNode* insertSymbol(SymbolTable table, char* symbol, SymbolTableItem* item);
+TrieNode* insertSymbol(SymbolTable table, char* symbol, SymbolTableType* item);
 void printSymbolTable(SymbolTable table);
 
 #endif

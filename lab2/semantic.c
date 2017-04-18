@@ -3,26 +3,31 @@
 
 #include "semantic.h"
 
-SymbolTableItem* retrieveType(SyntaxTreeNode* specifierNode) {
+SymbolTableType* retrieveType(SyntaxTreeNode* specifierNode) {
 	specifierNode = specifierNode->firstChild;
-	SymbolTableItem* newItem = (SymbolTableItem*)malloc(sizeof(SymbolTableItem));
+	SymbolTableType* newItem = (SymbolTableType*)malloc(sizeof(SymbolTableType));
 	if (specifierNode->type == N_TYPE) { // simple type
 		newItem->itemType = S_BASIC;
 		newItem->type.basicType = specifierNode->attr.typeType;
 		return newItem;
 	}
 	else { // struct specifier
-		/* TODO */
+		// TODO: parse struct specifier
 		return NULL;
 	}
 }
 
+void addDecListType(SymbolTableType* type, SyntaxTreeNode* decListNode) {
+}
+
 void handleLocalDefinition(SyntaxTreeNode* localDefNode, SymbolTable symbolTable) {
-	SymbolTableItem* item = retrieveType(localDefNode->firstChild);
+	SymbolTableType* type = retrieveType(localDefNode->firstChild);
+	addDecListType(type, localDefNode->firstChild->nextSibling);
 }
 
 void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, SymbolTable symbolTable) {
 	if (syntaxTreeNode->type == N_EXTDEF) { // external definition
+		// TODO: external definition
 	}
 	else if (syntaxTreeNode->type == N_DEF) { // local definition
 		handleLocalDefinition(syntaxTreeNode, symbolTable);
