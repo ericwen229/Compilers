@@ -19,7 +19,7 @@ typedef struct ArrayType {
 } ArrayType;
 
 typedef struct StructType {
-	char* name;
+	char* fieldName;
 	struct SymbolTableType* fieldType;
 	struct StructType* nextField;
 } StructType;
@@ -28,6 +28,7 @@ typedef union SymbolType {
 	BasicType basicType;
 	ArrayType arrayType;
 	StructType structType;
+	char* structName;
 } SymbolType;
 
 typedef struct SymbolTableType {
