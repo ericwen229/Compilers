@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "trie.h"
@@ -13,7 +14,7 @@ TrieNode* initNode() {
 	node->item = NULL;
 }
 
-int childIndex(char ch) {
+int ch2Index(char ch) {
 	if (ch == '_') {
 		return 0;
 	}
@@ -31,11 +32,29 @@ int childIndex(char ch) {
 	}
 }
 
+char index2Ch(int index) {
+	if (index == 0) {
+		return '_';
+	}
+	else if (index >= 1 && index < 27) {
+		return (char)('a' + (index - 1));
+	}
+	else if (index >= 27 && index < 53) {
+		return (char)('A' + (index - 27));
+	}
+	else if (index >= 53 && index < BRANCH_NUM) {
+		return (char)('0' + (index - 53));
+	}
+	else {
+		return '#';
+	}
+}
+
 void* query(TrieNode* node, char* str) {
 	int i = 0;
 	TrieNode* currNode = node;
 	for (i = 0; i < strlen(str); ++ i) {
-		int nextChildIndex = childIndex(str[i]);
+		int nextChildIndex = ch2Index(str[i]);
 		if (currNode->child[nextChildIndex] == NULL) {
 			return NULL;
 		}
@@ -53,7 +72,7 @@ void insert(TrieNode* node, char* str, void* item) {
 	int i = 0;
 	TrieNode* currNode = node;
 	for (i = 0; i < strlen(str); ++ i) {
-		int nextChildIndex = childIndex(str[i]);
+		int nextChildIndex = ch2Index(str[i]);
 		if (currNode->child[nextChildIndex] == NULL) {
 			currNode->child[nextChildIndex] = initNode();
 		}
@@ -61,5 +80,27 @@ void insert(TrieNode* node, char* str, void* item) {
 	}
 	currNode->isEnd = true;
 	currNode->item = item;
+}
+
+void _print(TrieNode* trie, int level) {
+	int i = 0;
+	for (i = 0; i < BRANCH_NUM; ++ i) {
+		if (trie->child[i] != NULL) {
+			int j = 0;
+			for (j = 0; j < 2 * level; ++ j) {
+				putchar(' ');
+			}
+			putchar(index2Ch(i));
+			if (trie->child[i]->isEnd) {
+				putchar('*');
+			}
+			putchar('\n');
+			_print(trie->child[i], level + 1);
+		}
+	}
+}
+
+void print(TrieNode* trie) {
+	_print(trie, 0);
 }
 

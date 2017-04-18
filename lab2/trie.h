@@ -14,6 +14,7 @@ typedef struct TrieNode {
 TrieNode* initNode();
 void* query(TrieNode* node, char* str);
 void insert(TrieNode* trie, char* str, void* item);
+void print(TrieNode* trie);
 
 #endif
 

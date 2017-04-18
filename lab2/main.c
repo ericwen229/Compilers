@@ -4,6 +4,7 @@
 #include "def.h"
 #include "syntaxtree.h"
 #include "idtable.h"
+#include "trie.h"
 
 extern int yydebug;
 
