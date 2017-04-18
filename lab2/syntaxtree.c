@@ -4,7 +4,7 @@
 #include "syntaxtree.h"
 #include "idtable.h"
 
-extern idTable* gIdTable;
+extern IdTable* gIdTable;
 
 SyntaxTreeNode* createTerminalNode(NodeType type, Attribute attr, int lineno) {
 	SyntaxTreeNode *newNode = (SyntaxTreeNode*)malloc(sizeof(SyntaxTreeNode));
@@ -95,7 +95,7 @@ void printTree(SyntaxTreeNode* tree, int level) {
 			putchar(' ');
 		}
 		printf("%s", nodeName[(int)tree->type]);
-		idTableCell* cell = NULL;
+		IdTableCell* cell = NULL;
 		switch (tree->type) {
 			case N_ID:
 				cell = getCell(gIdTable, tree->attr.id);

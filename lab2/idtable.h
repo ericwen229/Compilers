@@ -1,20 +1,20 @@
 #ifndef __IDTABLE_H__
 #define __IDTABLE_H__
 
-typedef struct idTableCell {
+typedef struct IdTableCell {
 	char* name;
-} idTableCell;
+} IdTableCell;
 
-typedef struct idTable {
+typedef struct IdTable {
 	int size;
 	int capacity;
-	idTableCell** cells;
-} idTable;
+	IdTableCell** cells;
+} IdTable;
 
-idTable* createIdTable(int capacity);
-int insertId(idTable* table, char* name);
-idTableCell* getCell(idTable* table, int index);
-void freeTable(idTable* table);
+IdTable* createIdTable(int capacity);
+int insertId(IdTable* table, char* name);
+IdTableCell* getCell(IdTable* table, int index);
+void freeTable(IdTable* table);
 
 #endif
 

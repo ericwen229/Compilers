@@ -10,7 +10,7 @@ extern int yydebug;
 
 bool gError = false;
 
-idTable* gIdTable = NULL;
+IdTable* gIdTable = NULL;
 SyntaxTreeNode* gTree = NULL;
 
 void yyrestart(FILE*);

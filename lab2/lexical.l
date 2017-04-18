@@ -12,7 +12,7 @@
 	#include "idtable.h"
 
 	extern bool gError;
-	extern idTable* gIdTable;
+	extern IdTable* gIdTable;
 
 	static Attribute attr;
 
