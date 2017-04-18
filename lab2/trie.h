@@ -8,7 +8,7 @@
 typedef struct TrieNode {
 	struct TrieNode* child[BRANCH_NUM];
 	bool isEnd;
-	void* item;
+	void* type;
 } TrieNode;
 
 TrieNode* initTrieNode();

@@ -17,12 +17,35 @@ SymbolTableType* retrieveType(SyntaxTreeNode* specifierNode) {
 	}
 }
 
-void addDecListType(SymbolTableType* type, SyntaxTreeNode* decListNode) {
+void handleVarDec(SymbolTableType* type, SyntaxTreeNode* varDecNode) {
+	SyntaxTreeNode* child = varDecNode->firstChild;
+	if (child->type == N_ID) {
+		child->attr.id->type = type;
+	}
+	else {
+		// TODO: handle array
+	}
 }
 
-void handleLocalDefinition(SyntaxTreeNode* localDefNode, SymbolTable symbolTable) {
-	SymbolTableType* type = retrieveType(localDefNode->firstChild);
-	addDecListType(type, localDefNode->firstChild->nextSibling);
+void handleDec(SymbolTableType* type, SyntaxTreeNode* decNode) {
+	SyntaxTreeNode* varDecNode = decNode->firstChild;
+	handleVarDec(type, varDecNode);
+	if (varDecNode->nextSibling != NULL) {
+		// TODO: check assignment
+	}
+}
+
+void handleDecList(SymbolTableType* type, SyntaxTreeNode* decListNode) {
+	SyntaxTreeNode* decNode = decListNode->firstChild;
+	handleDec(type, decListNode->firstChild);
+	if (decListNode->firstChild->nextSibling != NULL) {
+		handleDecList(type, decListNode->firstChild->nextSibling->nextSibling);
+	}
+}
+
+void handleDef(SyntaxTreeNode* defNode, SymbolTable symbolTable) {
+	SymbolTableType* type = retrieveType(defNode->firstChild);
+	handleDecList(type, defNode->firstChild->nextSibling);
 }
 
 void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, SymbolTable symbolTable) {
@@ -30,7 +53,7 @@ void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, SymbolTable symbolTable) {
 		// TODO: external definition
 	}
 	else if (syntaxTreeNode->type == N_DEF) { // local definition
-		handleLocalDefinition(syntaxTreeNode, symbolTable);
+		handleDef(syntaxTreeNode, symbolTable);
 	}
 	// TODO: other node types
 

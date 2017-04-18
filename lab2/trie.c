@@ -11,7 +11,7 @@ TrieNode* initTrieNode() {
 		node->child[i] = NULL;
 	}
 	node->isEnd = false;
-	node->item = NULL;
+	node->type = NULL;
 }
 
 int ch2Index(char ch) {
@@ -61,14 +61,14 @@ void* queryTrie(TrieNode* node, char* str) {
 		currNode = currNode->child[nextChildIndex];
 	}
 	if (currNode->isEnd) {
-		return currNode->item;
+		return currNode->type;
 	}
 	else {
 		return NULL;
 	}
 }
 
-TrieNode* insertTrie(TrieNode* node, char* str, void* item) {
+TrieNode* insertTrie(TrieNode* node, char* str, void* type) {
 	int i = 0;
 	TrieNode* currNode = node;
 	for (i = 0; i < strlen(str); ++ i) {
@@ -79,7 +79,7 @@ TrieNode* insertTrie(TrieNode* node, char* str, void* item) {
 		currNode = currNode->child[nextChildIndex];
 	}
 	currNode->isEnd = true;
-	currNode->item = item;
+	currNode->type = type;
 	return currNode;
 }
 
