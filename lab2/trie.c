@@ -87,9 +87,18 @@ TrieNode* insertTrie(TrieNode* node, char* str, void* type) {
 void printType(void* _type) {
 	if (_type == NULL) return;
 	SymbolTableType* type = (SymbolTableType*)_type;
-	if (type->itemType == S_BASIC) {
-		printf("[BASIC]");
+	if (type->typeType == S_BASIC) {
+		if (type->type.basicType == T_INT) {
+			printf("<<INT>>");
+		}
+		else {
+			printf("<<FLOAT>>");
+		}
 	}
+	else if (type->typeType == S_ARRAY) {
+		printf("[%d]", type->type.arrayType.len);
+		printType((void*)type->type.arrayType.elementType);
+	 }
 	// TODO: other types of type
 }
 

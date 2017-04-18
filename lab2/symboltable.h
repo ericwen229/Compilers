@@ -11,12 +11,20 @@ typedef enum SymbolTableTypeType {
 	S_BASIC, S_ARRAY, S_STRUCTDEF, S_STRUCT, S_FUNCTION
 } SymbolTableTypeType;
 
+struct SymbolTableType;
+
+typedef struct ArrayType {
+	int len;
+	struct SymbolTableType *elementType;
+} ArrayType;
+
 typedef union SymbolType {
 	BasicType basicType;
+	ArrayType arrayType;
 } SymbolType;
 
 typedef struct SymbolTableType {
-	SymbolTableTypeType itemType;
+	SymbolTableTypeType typeType;
 	SymbolType type;
 } SymbolTableType;
 

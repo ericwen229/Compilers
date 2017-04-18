@@ -7,7 +7,7 @@ SymbolTableType* retrieveType(SyntaxTreeNode* specifierNode) {
 	specifierNode = specifierNode->firstChild;
 	SymbolTableType* newItem = (SymbolTableType*)malloc(sizeof(SymbolTableType));
 	if (specifierNode->type == N_TYPE) { // simple type
-		newItem->itemType = S_BASIC;
+		newItem->typeType = S_BASIC;
 		newItem->type.basicType = specifierNode->attr.typeType;
 		return newItem;
 	}
@@ -23,7 +23,11 @@ void handleVarDec(SymbolTableType* type, SyntaxTreeNode* varDecNode) {
 		child->attr.id->type = type;
 	}
 	else {
-		// TODO: handle array
+		SymbolTableType* array = (SymbolTableType*)malloc(sizeof(SymbolTableType));
+		array->typeType = S_ARRAY;
+		array->type.arrayType.len = child->nextSibling->nextSibling->attr.intValue;
+		array->type.arrayType.elementType = type;
+		handleVarDec(array, child);
 	}
 }
 
