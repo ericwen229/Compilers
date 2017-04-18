@@ -28,7 +28,6 @@ typedef struct SymbolTableItem {
 SymbolTable initSymbolTable();
 void insertSymbol(SymbolTable table, char* symbol, SymbolTableItem* item);
 void printSymbolTable(SymbolTable table);
-void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, IdTable* idTable, SymbolTable symbolTable);
 
 #endif
 

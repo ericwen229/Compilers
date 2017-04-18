@@ -5,6 +5,7 @@
 #include "syntaxtree.h"
 #include "idtable.h"
 #include "symboltable.h"
+#include "semantic.h"
 
 extern int yydebug;
 
