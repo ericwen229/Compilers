@@ -18,7 +18,6 @@ typedef union SymbolType {
 typedef struct SymbolTableItem {
 	SymbolTableItemType itemType;
 	SymbolType type;
-	char* name;
 } SymbolTableItem;
 
 #endif
