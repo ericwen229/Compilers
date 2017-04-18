@@ -4,7 +4,7 @@
 #include "def.h"
 #include "syntaxtree.h"
 #include "idtable.h"
-#include "trie.h"
+#include "symboltable.h"
 
 extern int yydebug;
 
@@ -23,12 +23,13 @@ int main(int argc, char* argv[]) {
 		perror(argv[1]);
 		return 1;	
 	}
-	gIdTable = createIdTable(64);
-	//yydebug = 1;
+	gIdTable = createIdTable(128);
 	yyrestart(f);
 	yyparse();
 	if (!gError) {
-		// TODO: semantic analysis
+		SymbolTable symbolTable = initSymbolTable();
+		semanticAnalysis(gTree, gIdTable, symbolTable);
+		printSymbolTable(symbolTable);
 	}
 	freeTree(gTree);
 	freeTable(gIdTable);

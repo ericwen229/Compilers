@@ -3,8 +3,10 @@
 
 #include "def.h"
 #include "trie.h"
+#include "syntaxtree.h"
+#include "idtable.h"
 
-typedef TrieNode SymbolTable;
+typedef TrieNode* SymbolTable;
 
 typedef enum SymbolTableItemType {
 	BASIC, ARRAY, STRUCTDEF, STRUCT, FUNCTION
@@ -23,7 +25,10 @@ typedef struct SymbolTableItem {
 	SymbolType type;
 } SymbolTableItem;
 
-SymbolTable* initSymbolTable();
+SymbolTable initSymbolTable();
+void insertSymbol(SymbolTable table, char* symbol, SymbolTableItem* item);
+void printSymbolTable(SymbolTable table);
+void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, idTable* idTable, SymbolTable symbolTable);
 
 #endif
 
