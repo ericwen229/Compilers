@@ -1,7 +1,9 @@
+#include <stdlib.h>
+
 #include "symboltable.h"
 
 SymbolTable initSymbolTable() {
-	return initTrieNode();
+	return initTrieNode(NULL);
 }
 
 TrieNode* insertSymbol(SymbolTable table, char* symbol, SymbolTableType* item) {
