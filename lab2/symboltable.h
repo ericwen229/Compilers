@@ -18,10 +18,14 @@ typedef struct ArrayType {
 	struct SymbolTableType* elementType;
 } ArrayType;
 
-typedef struct StructType {
+typedef struct StructField {
 	char* fieldName;
 	struct SymbolTableType* fieldType;
-	struct StructType* nextField;
+	struct StructField* nextField;
+} StructField;
+
+typedef struct StructType {
+	StructField* firstField;
 } StructType;
 
 typedef union SymbolType {
@@ -37,7 +41,7 @@ typedef struct SymbolTableType {
 } SymbolTableType;
 
 SymbolTable initSymbolTable();
-TrieNode* insertSymbol(SymbolTable table, char* symbol, SymbolTableType* item);
+TrieNode* insertSymbol(SymbolTable table, char* symbol, SymbolTableType* type);
 void printSymbolTable(SymbolTable table);
 
 #endif

@@ -4,6 +4,20 @@
 
 #include "semantic.h"
 
+// TODO: type may be set twice
+
+StructField* handleDef(SyntaxTreeNode* defNode, SymbolTable symbolTable, bool isStruct, StructField* currField);
+
+StructField* handleStructDefList(SyntaxTreeNode* defListNode, SymbolTable symbolTable) {
+	if (defListNode->firstChild == NULL) {
+		return NULL;
+	}
+	StructField* currField = (StructField*)malloc(sizeof(StructField));
+	StructField* tailField = handleDef(defListNode->firstChild, symbolTable, true, currField);
+	tailField->nextField = handleStructDefList(defListNode->firstChild->nextSibling, symbolTable);
+	return currField;
+}
+
 SymbolTableType* handleStructSpecifier(SyntaxTreeNode* structSpecifierNode, SymbolTable symbolTable) {
 	SyntaxTreeNode* tagNode = structSpecifierNode->firstChild->nextSibling;
 	if (tagNode->type == N_TAG) {
@@ -33,11 +47,15 @@ SymbolTableType* handleStructSpecifier(SyntaxTreeNode* structSpecifierNode, Symb
 			structName = retrieveStr(tagNode->firstChild->attr.id);
 		}
 
-		// TODO: insert into symbol table
+		SymbolTableType* insertType = (SymbolTableType*)malloc(sizeof(SymbolTableType));
+		insertType->typeType = S_STRUCTDEF;
+		insertType->type.structType.firstField = handleStructDefList(tagNode->nextSibling->nextSibling, symbolTable);
+		TrieNode* structDefNode = insertSymbol(symbolTable, structName, insertType);
 
 		SymbolTableType* newType = (SymbolTableType*)malloc(sizeof(SymbolTableType));
 		newType->typeType = S_STRUCT;
 		newType->type.structName = structName;
+		return newType;
 	}
 }
 
@@ -54,44 +72,58 @@ SymbolTableType* handleSpecifier(SyntaxTreeNode* specifierNode, SymbolTable symb
 	}
 }
 
-void handleVarDec(SymbolTableType* type, SyntaxTreeNode* varDecNode) {
+void handleVarDec(SymbolTableType* type, SyntaxTreeNode* varDecNode, bool isStruct, StructField* currField) {
 	SyntaxTreeNode* child = varDecNode->firstChild;
 	if (child->type == N_ID) {
 		child->attr.id->type = type;
+		if (isStruct) {
+			currField->fieldName = retrieveStr(child->attr.id);
+			currField->fieldType = type;
+		}
 	}
 	else {
 		SymbolTableType* array = (SymbolTableType*)malloc(sizeof(SymbolTableType));
 		array->typeType = S_ARRAY;
 		array->type.arrayType.len = child->nextSibling->nextSibling->attr.intValue;
 		array->type.arrayType.elementType = type;
-		handleVarDec(array, child);
+		handleVarDec(array, child, isStruct, currField);
 	}
 }
 
-void handleDec(SymbolTableType* type, SyntaxTreeNode* decNode) {
+void handleDec(SymbolTableType* type, SyntaxTreeNode* decNode, bool isStruct, StructField* currField) {
 	SyntaxTreeNode* varDecNode = decNode->firstChild;
-	handleVarDec(type, varDecNode);
+	handleVarDec(type, varDecNode, isStruct, currField);
 }
 
-void handleDecList(SymbolTableType* type, SyntaxTreeNode* decListNode) {
+StructField* handleDecList(SymbolTableType* type, SyntaxTreeNode* decListNode, bool isStruct, StructField* currField) {
 	SyntaxTreeNode* decNode = decListNode->firstChild;
-	handleDec(type, decListNode->firstChild);
+	handleDec(type, decListNode->firstChild, isStruct, currField);
 	if (decListNode->firstChild->nextSibling != NULL) {
-		handleDecList(type, decListNode->firstChild->nextSibling->nextSibling);
+		StructField* nextField = NULL;
+		if (isStruct) {
+			nextField = (StructField*)malloc(sizeof(StructField));
+			currField->nextField = nextField;
+		}
+		return handleDecList(type, decListNode->firstChild->nextSibling->nextSibling, isStruct, nextField);
+	}
+	else {
+		return currField;
 	}
 }
 
-void handleDef(SyntaxTreeNode* defNode, SymbolTable symbolTable) {
+StructField* handleDef(SyntaxTreeNode* defNode, SymbolTable symbolTable, bool isStruct, StructField* currField) {
 	SymbolTableType* type = handleSpecifier(defNode->firstChild, symbolTable);
-	handleDecList(type, defNode->firstChild->nextSibling);
+	return handleDecList(type, defNode->firstChild->nextSibling, isStruct, currField);
 }
 
 void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, SymbolTable symbolTable) {
 	if (syntaxTreeNode->type == N_EXTDEF) { // external definition
 		// TODO: external definition
+		// return;
 	}
 	else if (syntaxTreeNode->type == N_DEF) { // local definition
-		handleDef(syntaxTreeNode, symbolTable);
+		handleDef(syntaxTreeNode, symbolTable, false, NULL);
+		// return;
 	}
 	// TODO: other node types
 
