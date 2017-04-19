@@ -3,20 +3,24 @@
 
 #include "semantic.h"
 
-SymbolTableType* retrieveType(SyntaxTreeNode* specifierNode) {
+SymbolTableType* handleStructSpecifier(SyntaxTreeNode* structSpecifierNode, SymbolTable symbolTable) {
+	SyntaxTreeNode* tagNode = structSpecifierNode->firstChild->nextSibling;
+	if (tagNode->type == N_TAG) { // TODO: retrieve type name from symbol table
+	}
+	else { // TODO: new definition, insert to symbol table then return
+	}
+}
+
+SymbolTableType* handleSpecifier(SyntaxTreeNode* specifierNode, SymbolTable symbolTable) {
 	specifierNode = specifierNode->firstChild;
-	SymbolTableType* newItem = (SymbolTableType*)malloc(sizeof(SymbolTableType));
 	if (specifierNode->type == N_TYPE) { // simple type
+		SymbolTableType* newItem = (SymbolTableType*)malloc(sizeof(SymbolTableType));
 		newItem->typeType = S_BASIC;
 		newItem->type.basicType = specifierNode->attr.typeType;
 		return newItem;
 	}
 	else { // struct specifier
-		// TODO: parse struct specifier
-		// add struct type to symbol table
-		// if no tag specified then specify one starting with 0
-		// the variable holds the name of structure definition
-		return NULL;
+		return handleStructSpecifier(specifierNode, symbolTable);
 	}
 }
 
@@ -48,7 +52,7 @@ void handleDecList(SymbolTableType* type, SyntaxTreeNode* decListNode) {
 }
 
 void handleDef(SyntaxTreeNode* defNode, SymbolTable symbolTable) {
-	SymbolTableType* type = retrieveType(defNode->firstChild);
+	SymbolTableType* type = handleSpecifier(defNode->firstChild, symbolTable);
 	handleDecList(type, defNode->firstChild->nextSibling);
 }
 
