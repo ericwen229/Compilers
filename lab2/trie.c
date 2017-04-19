@@ -86,8 +86,24 @@ TrieNode* insertTrie(TrieNode* node, char* str, void* type) {
 	return currNode;
 }
 
+int getDepth(TrieNode* node) {
+	if (node->parent == NULL) {
+		return 0;
+	}
+	else {
+		return 1 + getDepth(node->parent);
+	}
+}
+
 char* retrieveStr(TrieNode* node) {
-	return NULL;
+	int length = getDepth(node);
+	char* str = (char*)malloc((length + 1) * sizeof(char));
+	str[length] = '\0';
+	for (int i = length - 1; i >= 0; -- i) {
+		str[i] = index2Ch(node->parentIndex);
+		node = node->parent;
+	}
+	return str;
 }
 
 void printType(void* _type) {
@@ -128,6 +144,24 @@ void _printTrie(TrieNode* trie, int level) {
 }
 
 void printTrie(TrieNode* trie) {
-	_printTrie(trie, 0);
+	// _printTrie(trie, 0);
+	if (trie == NULL) {
+		return;
+	}
+
+	if (trie->isEnd) {
+		putchar(' ');
+		char* str = retrieveStr(trie);
+		printf("%s", str);
+		free(str);
+		putchar(' ');
+		printType(trie->type);
+		putchar('\n');
+	}
+
+	int i = 0;
+	for (i = 0; i < BRANCH_NUM; ++ i) {
+		printTrie(trie->child[i]);
+	}
 }
 
