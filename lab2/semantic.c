@@ -13,6 +13,9 @@ SymbolTableType* retrieveType(SyntaxTreeNode* specifierNode) {
 	}
 	else { // struct specifier
 		// TODO: parse struct specifier
+		// add struct type to symbol table
+		// if no tag specified then specify one starting with 0
+		// the variable holds the name of structure definition
 		return NULL;
 	}
 }

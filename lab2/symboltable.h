@@ -27,7 +27,8 @@ typedef struct StructType {
 typedef union SymbolType {
 	BasicType basicType;
 	ArrayType arrayType;
-	StructType* structType;
+	StructType structType;
+	char* structName;
 } SymbolType;
 
 typedef struct SymbolTableType {
