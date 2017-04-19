@@ -37,9 +37,6 @@ void handleVarDec(SymbolTableType* type, SyntaxTreeNode* varDecNode) {
 void handleDec(SymbolTableType* type, SyntaxTreeNode* decNode) {
 	SyntaxTreeNode* varDecNode = decNode->firstChild;
 	handleVarDec(type, varDecNode);
-	if (varDecNode->nextSibling != NULL) {
-		// TODO: check assignment
-	}
 }
 
 void handleDecList(SymbolTableType* type, SyntaxTreeNode* decListNode) {
