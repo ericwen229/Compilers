@@ -5,19 +5,28 @@
 
 SymbolTableType* handleStructSpecifier(SyntaxTreeNode* structSpecifierNode, SymbolTable symbolTable) {
 	SyntaxTreeNode* tagNode = structSpecifierNode->firstChild->nextSibling;
-	if (tagNode->type == N_TAG) { // TODO: retrieve type name from symbol table
+	if (tagNode->type == N_TAG) {
+		// current node is StructSpecifier
+		// production is STRUCT Tag
+		// TODO
+		SymbolTableType* newType = (SymbolTableType*)malloc(sizeof(SymbolTableType));
+		newType->typeType = S_STRUCT;
+		newType->type.structName = retrieveStr(tagNode->firstChild->attr.id);
 	}
-	else { // TODO: new definition, insert to symbol table then return
+	else {
+		// current node is StructSpecifier
+		// production is STRUCT OptTag LC DefList RC
+		// TODO
 	}
 }
 
 SymbolTableType* handleSpecifier(SyntaxTreeNode* specifierNode, SymbolTable symbolTable) {
 	specifierNode = specifierNode->firstChild;
 	if (specifierNode->type == N_TYPE) { // simple type
-		SymbolTableType* newItem = (SymbolTableType*)malloc(sizeof(SymbolTableType));
-		newItem->typeType = S_BASIC;
-		newItem->type.basicType = specifierNode->attr.typeType;
-		return newItem;
+		SymbolTableType* newType = (SymbolTableType*)malloc(sizeof(SymbolTableType));
+		newType->typeType = S_BASIC;
+		newType->type.basicType = specifierNode->attr.typeType;
+		return newType;
 	}
 	else { // struct specifier
 		return handleStructSpecifier(specifierNode, symbolTable);

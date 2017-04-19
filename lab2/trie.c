@@ -120,7 +120,10 @@ void printType(void* _type) {
 	else if (type->typeType == S_ARRAY) {
 		printf("[%d]", type->type.arrayType.len);
 		printType((void*)type->type.arrayType.elementType);
-	 }
+	}
+	else if (type->typeType == S_STRUCT) {
+		printf("<<STRUCT %s>>", type->type.structName);
+	}
 	// TODO: other types of type
 }
 
