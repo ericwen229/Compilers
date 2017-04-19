@@ -1,9 +1,10 @@
-int a;
-
 int main() {
-	struct {} a;
-	struct {} b;
-	struct {} c;
+	int a;
+	float b;
+	int c[20][30];
+	struct {} d;
+	struct {} e;
+	struct {} f;
 	return 0;
 }
 
