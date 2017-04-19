@@ -5,9 +5,10 @@
 #include "trie.h"
 #include "symboltable.h"
 
-TrieNode* initTrieNode(TrieNode* parent) {
+TrieNode* initTrieNode(TrieNode* parent, int parentIndex) {
 	TrieNode* node = (TrieNode*)malloc(sizeof(TrieNode));
 	node->parent = parent;
+	node->parentIndex = parentIndex;
 	int i = 0;
 	for (i = 0; i < BRANCH_NUM; ++ i) {
 		node->child[i] = NULL;
@@ -76,7 +77,7 @@ TrieNode* insertTrie(TrieNode* node, char* str, void* type) {
 	for (i = 0; i < strlen(str); ++ i) {
 		int nextChildIndex = ch2Index(str[i]);
 		if (currNode->child[nextChildIndex] == NULL) {
-			currNode->child[nextChildIndex] = initTrieNode(currNode);
+			currNode->child[nextChildIndex] = initTrieNode(currNode, nextChildIndex);
 		}
 		currNode = currNode->child[nextChildIndex];
 	}
