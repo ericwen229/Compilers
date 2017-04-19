@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "semantic.h"
 
@@ -8,15 +9,35 @@ SymbolTableType* handleStructSpecifier(SyntaxTreeNode* structSpecifierNode, Symb
 	if (tagNode->type == N_TAG) {
 		// current node is StructSpecifier
 		// production is STRUCT Tag
-		// TODO
 		SymbolTableType* newType = (SymbolTableType*)malloc(sizeof(SymbolTableType));
 		newType->typeType = S_STRUCT;
 		newType->type.structName = retrieveStr(tagNode->firstChild->attr.id);
+		return newType;
 	}
 	else {
 		// current node is StructSpecifier
 		// production is STRUCT OptTag LC DefList RC
-		// TODO
+		char* structName = NULL;
+		if (tagNode->firstChild == NULL) {
+			// anonymous struct
+			static int anonymousCount = 0;
+			char nameBuf[9];
+			sprintf(nameBuf, "%x", anonymousCount);
+			++ anonymousCount;
+
+			structName = (char*)malloc((2 + strlen(nameBuf)) * sizeof(char));
+			structName[0] = '0';
+			strcpy(structName + 1, nameBuf);
+		}
+		else {
+			structName = retrieveStr(tagNode->firstChild->attr.id);
+		}
+
+		// TODO: insert into symbol table
+
+		SymbolTableType* newType = (SymbolTableType*)malloc(sizeof(SymbolTableType));
+		newType->typeType = S_STRUCT;
+		newType->type.structName = structName;
 	}
 }
 

@@ -1,8 +1,9 @@
 int a;
 
 int main() {
-	int i = 0, j, k, l[2][3];	
-	struct SomeKindOfStruct b;
+	struct {} a;
+	struct {} b;
+	struct {} c;
 	return 0;
 }
 
