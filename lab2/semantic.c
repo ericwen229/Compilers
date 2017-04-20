@@ -123,7 +123,7 @@ void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, SymbolTable symbolTable) {
 	}
 	else if (syntaxTreeNode->type == N_DEF) { // local definition
 		handleDef(syntaxTreeNode, symbolTable, false, NULL);
-		// return;
+		return;
 	}
 	// TODO: other node types
 
