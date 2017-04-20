@@ -2,9 +2,13 @@ int main() {
 	int a;
 	float b;
 	int c[20][30];
-	struct {} d;
-	struct {} e;
-	struct {} f;
+	struct {
+		int e;
+		float f[2][3];
+		struct g {
+			int h;
+		} i;
+	} d;
 	return 0;
 }
 

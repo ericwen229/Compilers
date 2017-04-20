@@ -103,6 +103,7 @@ StructField* handleDecList(SymbolTableType* type, SyntaxTreeNode* decListNode, b
 		if (isStruct) {
 			nextField = (StructField*)malloc(sizeof(StructField));
 			currField->nextField = nextField;
+			nextField->nextField = NULL;
 		}
 		return handleDecList(type, decListNode->firstChild->nextSibling->nextSibling, isStruct, nextField);
 	}

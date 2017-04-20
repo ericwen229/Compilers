@@ -107,7 +107,10 @@ char* retrieveStr(TrieNode* node) {
 }
 
 void printType(void* _type) {
-	if (_type == NULL) return;
+	if (_type == NULL) {
+		printf("<<NOTYPE>>");
+		return;
+	}
 	SymbolTableType* type = (SymbolTableType*)_type;
 	if (type->typeType == S_BASIC) {
 		if (type->type.basicType == T_INT) {
@@ -124,7 +127,19 @@ void printType(void* _type) {
 	else if (type->typeType == S_STRUCT) {
 		printf("<<STRUCT %s>>", type->type.structName);
 	}
-	// TODO: other types of type
+	else if (type->typeType == S_STRUCTDEF) {
+		printf("<<STRUCTDEF>>");
+		StructField* structField = type->type.structType.firstField;
+		while (structField != NULL) {
+			printf("[%s|", structField->fieldName);
+			printType((void*)structField->fieldType);
+			putchar(']');
+			structField = structField->nextField;
+		}
+	}
+	else { // TODO: other types
+		printf("<<UNKNOWN>>");
+	}
 }
 
 void _printTrie(TrieNode* trie, int level) {
