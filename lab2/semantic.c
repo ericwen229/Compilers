@@ -96,14 +96,14 @@ void handleDec(SymbolTableType* type, SyntaxTreeNode* decNode, bool isStruct, St
 StructField* handleDecList(SymbolTableType* type, SyntaxTreeNode* decListNode, bool isStruct, StructField* currField) {
 	SyntaxTreeNode* decNode = decListNode->firstChild;
 	handleDec(type, decListNode->firstChild, isStruct, currField);
-	if (decListNode->firstChild->nextSibling != NULL) {
+	if (decNode->nextSibling != NULL) {
 		StructField* nextField = NULL;
 		if (isStruct) {
 			nextField = (StructField*)malloc(sizeof(StructField));
 			currField->nextField = nextField;
 			nextField->nextField = NULL;
 		}
-		return handleDecList(type, decListNode->firstChild->nextSibling->nextSibling, isStruct, nextField);
+		return handleDecList(type, decNode->nextSibling->nextSibling, isStruct, nextField);
 	}
 	else {
 		return currField;
@@ -115,11 +115,22 @@ StructField* handleDef(SyntaxTreeNode* defNode, SymbolTable symbolTable, bool is
 	return handleDecList(type, defNode->firstChild->nextSibling, isStruct, currField);
 }
 
+void handleExtDecList(SymbolTableType* type, SyntaxTreeNode* extDecListNode) {
+	SyntaxTreeNode* varDecNode = extDecListNode->firstChild;
+	handleVarDec(type, varDecNode, false, NULL);
+	if (varDecNode->nextSibling != NULL) {
+		handleExtDecList(type, varDecNode->nextSibling->nextSibling);
+	}
+}
+
 void handleExtDef(SyntaxTreeNode* extDefNode, SymbolTable symbolTable) {
 	SymbolTableType* type = handleSpecifier(extDefNode->firstChild, symbolTable);
 	SyntaxTreeNode* secondChild = extDefNode->firstChild->nextSibling;
-	if (secondChild->type = N_SEMI) {
+	if (secondChild->type == N_SEMI) {
 		free(type);
+	}
+	else if (secondChild->type == N_EXTDECLIST) {
+		handleExtDecList(type, secondChild);
 	}
 }
 

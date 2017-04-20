@@ -1,7 +1,5 @@
-struct {
-	int foo;
-	int bar;
-};
+int haha;
+float foo, bar;
 
 int main() {
 	int a;
