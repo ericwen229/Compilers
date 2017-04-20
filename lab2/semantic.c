@@ -4,8 +4,6 @@
 
 #include "semantic.h"
 
-// TODO: type may be set twice
-
 StructField* handleDef(SyntaxTreeNode* defNode, SymbolTable symbolTable, bool isStruct, StructField* currField);
 
 StructField* handleStructDefList(SyntaxTreeNode* defListNode, SymbolTable symbolTable) {
@@ -117,15 +115,23 @@ StructField* handleDef(SyntaxTreeNode* defNode, SymbolTable symbolTable, bool is
 	return handleDecList(type, defNode->firstChild->nextSibling, isStruct, currField);
 }
 
+void handleExtDef(SyntaxTreeNode* extDefNode, SymbolTable symbolTable) {
+	SymbolTableType* type = handleSpecifier(extDefNode->firstChild, symbolTable);
+	SyntaxTreeNode* secondChild = extDefNode->firstChild->nextSibling;
+	if (secondChild->type = N_SEMI) {
+		free(type);
+	}
+}
+
 void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, SymbolTable symbolTable) {
 	if (syntaxTreeNode->type == N_EXTDEF) { // external definition
-		// TODO: external definition
-		// return;
-	}
-	else if (syntaxTreeNode->type == N_DEF) { // local definition
-		handleDef(syntaxTreeNode, symbolTable, false, NULL);
+		handleExtDef(syntaxTreeNode, symbolTable);
 		return;
 	}
+	//else if (syntaxTreeNode->type == N_DEF) { // local definition
+	//	handleDef(syntaxTreeNode, symbolTable, false, NULL);
+	//	return;
+	//}
 	// TODO: other node types
 
 	SyntaxTreeNode* child = syntaxTreeNode->firstChild;
