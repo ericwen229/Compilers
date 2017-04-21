@@ -43,6 +43,8 @@ typedef struct SymbolTableType {
 SymbolTable initSymbolTable();
 TrieNode* insertSymbol(SymbolTable table, char* symbol, SymbolTableType* type);
 SymbolTableType* initSymbolTableType();
+SymbolTableType* copySymbolTableType(SymbolTableType* type);
+void freeSymbolTableType(SymbolTableType* type);
 void printSymbolTable(SymbolTable table);
 
 #endif

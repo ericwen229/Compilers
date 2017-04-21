@@ -95,7 +95,7 @@ void handleDec(SymbolTableType* type, SyntaxTreeNode* decNode, bool isStruct, St
 
 StructField* handleDecList(SymbolTableType* type, SyntaxTreeNode* decListNode, bool isStruct, StructField* currField) {
 	SyntaxTreeNode* decNode = decListNode->firstChild;
-	handleDec(type, decListNode->firstChild, isStruct, currField);
+	handleDec(copySymbolTableType(type), decListNode->firstChild, isStruct, currField);
 	if (decNode->nextSibling != NULL) {
 		StructField* nextField = NULL;
 		if (isStruct) {
@@ -112,7 +112,9 @@ StructField* handleDecList(SymbolTableType* type, SyntaxTreeNode* decListNode, b
 
 StructField* handleDef(SyntaxTreeNode* defNode, SymbolTable symbolTable, bool isStruct, StructField* currField) {
 	SymbolTableType* type = handleSpecifier(defNode->firstChild, symbolTable);
-	return handleDecList(type, defNode->firstChild->nextSibling, isStruct, currField);
+	StructField* field = handleDecList(type, defNode->firstChild->nextSibling, isStruct, currField);
+	freeSymbolTableType(type);
+	return field;
 }
 
 void handleExtDecList(SymbolTableType* type, SyntaxTreeNode* extDecListNode) {

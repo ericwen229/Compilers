@@ -174,6 +174,7 @@ void printTrie(TrieNode* trie) {
 		free(str);
 		putchar(' ');
 		printType(trie->type);
+		freeSymbolTableType(trie->type);
 		putchar('\n');
 	}
 

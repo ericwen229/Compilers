@@ -5,7 +5,3 @@ struct {
 	int d;
 } a;
 
-int main() {
-	return 0;
-}
-
