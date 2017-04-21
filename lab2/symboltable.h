@@ -8,7 +8,7 @@
 typedef TrieNode* SymbolTable;
 
 typedef enum SymbolTableTypeType {
-	S_BASIC, S_ARRAY, S_STRUCTDEF, S_STRUCT, S_FUNCTION
+	S_DEFAULT, S_BASIC, S_ARRAY, S_STRUCTDEF, S_STRUCT, S_FUNCTION
 } SymbolTableTypeType;
 
 struct SymbolTableType;
@@ -42,6 +42,7 @@ typedef struct SymbolTableType {
 
 SymbolTable initSymbolTable();
 TrieNode* insertSymbol(SymbolTable table, char* symbol, SymbolTableType* type);
+SymbolTableType* initSymbolTableType();
 void printSymbolTable(SymbolTable table);
 
 #endif

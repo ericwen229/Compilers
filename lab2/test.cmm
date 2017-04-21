@@ -1,17 +1,11 @@
-int haha;
-float foo, bar;
+struct {
+	struct {
+		int c;
+	} b;
+	int d;
+} a;
 
 int main() {
-	int a;
-	float b;
-	int c[20][30];
-	struct {
-		int e;
-		float f[2][3];
-		struct g {
-			int h;
-		} i;
-	} d;
 	return 0;
 }
 

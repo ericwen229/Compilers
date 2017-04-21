@@ -21,7 +21,7 @@ SymbolTableType* handleStructSpecifier(SyntaxTreeNode* structSpecifierNode, Symb
 	if (tagNode->type == N_TAG) {
 		// current node is StructSpecifier
 		// production is STRUCT Tag
-		SymbolTableType* newType = (SymbolTableType*)malloc(sizeof(SymbolTableType));
+		SymbolTableType* newType = initSymbolTableType();
 		newType->typeType = S_STRUCT;
 		newType->type.structName = retrieveStr(tagNode->firstChild->attr.id);
 		return newType;
@@ -45,12 +45,12 @@ SymbolTableType* handleStructSpecifier(SyntaxTreeNode* structSpecifierNode, Symb
 			structName = retrieveStr(tagNode->firstChild->attr.id);
 		}
 
-		SymbolTableType* insertType = (SymbolTableType*)malloc(sizeof(SymbolTableType));
+		SymbolTableType* insertType = initSymbolTableType();
 		insertType->typeType = S_STRUCTDEF;
 		insertType->type.structType.firstField = handleStructDefList(tagNode->nextSibling->nextSibling, symbolTable);
 		TrieNode* structDefNode = insertSymbol(symbolTable, structName, insertType);
 
-		SymbolTableType* newType = (SymbolTableType*)malloc(sizeof(SymbolTableType));
+		SymbolTableType* newType = initSymbolTableType();
 		newType->typeType = S_STRUCT;
 		newType->type.structName = structName;
 		return newType;
@@ -60,7 +60,7 @@ SymbolTableType* handleStructSpecifier(SyntaxTreeNode* structSpecifierNode, Symb
 SymbolTableType* handleSpecifier(SyntaxTreeNode* specifierNode, SymbolTable symbolTable) {
 	specifierNode = specifierNode->firstChild;
 	if (specifierNode->type == N_TYPE) { // simple type
-		SymbolTableType* newType = (SymbolTableType*)malloc(sizeof(SymbolTableType));
+		SymbolTableType* newType = initSymbolTableType();
 		newType->typeType = S_BASIC;
 		newType->type.basicType = specifierNode->attr.typeType;
 		return newType;
@@ -80,7 +80,7 @@ void handleVarDec(SymbolTableType* type, SyntaxTreeNode* varDecNode, bool isStru
 		}
 	}
 	else {
-		SymbolTableType* array = (SymbolTableType*)malloc(sizeof(SymbolTableType));
+		SymbolTableType* array = initSymbolTableType();
 		array->typeType = S_ARRAY;
 		array->type.arrayType.len = child->nextSibling->nextSibling->attr.intValue;
 		array->type.arrayType.elementType = type;
