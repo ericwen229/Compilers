@@ -49,17 +49,26 @@ void freeStructField(StructField* field) {
 }
 
 void freeSymbolTableType(SymbolTableType* type) {
+	if (type == NULL) {
+		printf("NULL TYPE BEING FREED\n");
+		return;
+	}
 	switch (type->typeType) {
 	case S_DEFAULT: free(type); break;
 	case S_BASIC: free(type); break;
 	case S_ARRAY: freeSymbolTableType(type->type.arrayType.elementType); free(type); break;
 	case S_STRUCT: free(type->type.structName); free(type); break;
 	case S_STRUCTDEF: freeStructField(type->type.structType.firstField); free(type); break;
+	case S_FUNCTION: break;
 	default: printf("??? BEING FREED\n"); break;
 	}
 }
 
 void printSymbolTable(SymbolTable table) {
 	printTrie(table);
+}
+
+void freeSymbolTable(SymbolTable table) {
+	freeTrie(table);
 }
 

@@ -46,6 +46,7 @@ SymbolTableType* initSymbolTableType();
 SymbolTableType* copySymbolTableType(SymbolTableType* type);
 void freeSymbolTableType(SymbolTableType* type);
 void printSymbolTable(SymbolTable table);
+void freeSymbolTable(SymbolTable table);
 
 #endif
 

@@ -18,6 +18,7 @@ void* queryTrie(TrieNode* node, char* str);
 TrieNode* insertTrie(TrieNode* trie, char* str, void* item);
 char* retrieveStr(TrieNode* node);
 void printTrie(TrieNode* trie);
+void freeTrie(TrieNode* trie);
 
 #endif
 

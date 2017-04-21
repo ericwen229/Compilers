@@ -163,3 +163,19 @@ void printTrie(TrieNode* trie) {
 	}
 }
 
+void freeTrie(TrieNode* trie) {
+	if (trie == NULL) {
+		return;
+	}
+
+	if (trie->type != NULL) {
+		freeSymbolTableType(trie->type);
+	}
+
+	int i = 0;
+	for (i = 0; i < BRANCH_NUM; ++ i) {
+		freeTrie(trie->child[i]);
+	}
+	free(trie);
+}
+

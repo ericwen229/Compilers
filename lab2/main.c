@@ -31,5 +31,6 @@ int main(int argc, char* argv[]) {
 		printSymbolTable(gSymbolTable);
 	}
 	freeTree(gTree);
+	freeSymbolTable(gSymbolTable);
 	return 0;
 }
