@@ -142,27 +142,7 @@ void printType(void* _type) {
 	}
 }
 
-void _printTrie(TrieNode* trie, int level) {
-	int i = 0;
-	for (i = 0; i < BRANCH_NUM; ++ i) {
-		if (trie->child[i] != NULL) {
-			int j = 0;
-			for (j = 0; j < 2 * level; ++ j) {
-				putchar(' ');
-			}
-			putchar(index2Ch(i));
-			if (trie->child[i]->isEnd) {
-				putchar('*');
-				printType(trie->child[i]->type);
-			}
-			putchar('\n');
-			_printTrie(trie->child[i], level + 1);
-		}
-	}
-}
-
 void printTrie(TrieNode* trie) {
-	// _printTrie(trie, 0);
 	if (trie == NULL) {
 		return;
 	}
@@ -174,7 +154,6 @@ void printTrie(TrieNode* trie) {
 		free(str);
 		putchar(' ');
 		printType(trie->type);
-		freeSymbolTableType(trie->type);
 		putchar('\n');
 	}
 
