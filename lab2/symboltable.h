@@ -28,11 +28,22 @@ typedef struct StructType {
 	StructField* firstField;
 } StructType;
 
+typedef struct FuncParam {
+	struct SymbolTableType* funcType;
+	struct FuncParam* nextParam;
+} FuncParam;
+
+typedef struct FuncType {
+	struct SymbolTableType* returnType;
+	FuncParam* firstParam;
+} FuncType;
+
 typedef union SymbolType {
 	BasicType basicType;
 	ArrayType arrayType;
 	StructType structType;
 	char* structName;
+	FuncType funcType;
 } SymbolType;
 
 typedef struct SymbolTableType {
