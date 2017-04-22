@@ -70,7 +70,7 @@ SymbolTableType* handleSpecifier(SyntaxTreeNode* specifierNode, SymbolTable symb
 	}
 }
 
-void handleVarDec(SymbolTableType* type, SyntaxTreeNode* varDecNode, bool isStruct, StructField* currField) {
+void handleVarDec(SymbolTableType* type, SyntaxTreeNode* varDecNode, bool isStruct, StructField* currField, bool isParam, FuncParam* currParam) {
 	SyntaxTreeNode* child = varDecNode->firstChild;
 	if (child->type == N_ID) {
 		child->attr.id->type = type;
@@ -78,19 +78,22 @@ void handleVarDec(SymbolTableType* type, SyntaxTreeNode* varDecNode, bool isStru
 			currField->fieldName = retrieveStr(child->attr.id);
 			currField->fieldType = type;
 		}
+		else if (isParam) {
+			currParam->paramType = type;
+		}
 	}
 	else {
 		SymbolTableType* array = initSymbolTableType();
 		array->typeType = S_ARRAY;
 		array->type.arrayType.len = child->nextSibling->nextSibling->attr.intValue;
 		array->type.arrayType.elementType = type;
-		handleVarDec(array, child, isStruct, currField);
+		handleVarDec(array, child, isStruct, currField, isParam, currParam);
 	}
 }
 
 void handleDec(SymbolTableType* type, SyntaxTreeNode* decNode, bool isStruct, StructField* currField) {
 	SyntaxTreeNode* varDecNode = decNode->firstChild;
-	handleVarDec(type, varDecNode, isStruct, currField);
+	handleVarDec(type, varDecNode, isStruct, currField, false, NULL);
 }
 
 StructField* handleDecList(SymbolTableType* type, SyntaxTreeNode* decListNode, bool isStruct, StructField* currField) {
@@ -119,27 +122,57 @@ StructField* handleDef(SyntaxTreeNode* defNode, SymbolTable symbolTable, bool is
 
 void handleExtDecList(SymbolTableType* type, SyntaxTreeNode* extDecListNode) {
 	SyntaxTreeNode* varDecNode = extDecListNode->firstChild;
-	handleVarDec(type, varDecNode, false, NULL);
+	handleVarDec(type, varDecNode, false, NULL, false, NULL);
 	if (varDecNode->nextSibling != NULL) {
-		handleExtDecList(type, varDecNode->nextSibling->nextSibling);
+		handleExtDecList(copySymbolTableType(type), varDecNode->nextSibling->nextSibling);
 	}
 }
 
-void handleFunDec(SymbolTableType* type, SyntaxTreeNode* funDecNode) {
+FuncParam* handleParamDec(SyntaxTreeNode* paramDecNode, SymbolTable symbolTable) {
+	SymbolTableType* type = handleSpecifier(paramDecNode->firstChild, symbolTable);
+	FuncParam* currParam = (FuncParam*)malloc(sizeof(FuncParam));
+	currParam->nextParam = NULL;
+	handleVarDec(type, paramDecNode->firstChild->nextSibling, false, NULL, true, currParam);
+	return currParam;
+}
+
+FuncParam* handleVarList(SyntaxTreeNode* varListNode, SymbolTable symbolTable) {
+	FuncParam* currParam = handleParamDec(varListNode->firstChild, symbolTable);
+	if (varListNode->firstChild->nextSibling != NULL) {
+		currParam->nextParam = handleVarList(varListNode->firstChild->nextSibling->nextSibling, symbolTable);
+	}
+	else {
+		currParam->nextParam = NULL;
+	}
+	return currParam;
+}
+
+void handleFunDec(SymbolTableType* returnType, SyntaxTreeNode* funDecNode, SymbolTable symbolTable) {
+	SyntaxTreeNode* nameNode = funDecNode->firstChild;
+	SymbolTableType* funcType = initSymbolTableType();
+	funcType->typeType = S_FUNCTION;
+	funDecNode->firstChild->attr.id->type = funcType;
+	funcType->type.funcType.returnType = copySymbolTableType(returnType);
+	if (nameNode->nextSibling->nextSibling->type == N_RP) {
+		funcType->type.funcType.firstParam = NULL;
+	}
+	else {
+		funcType->type.funcType.firstParam = handleVarList(nameNode->nextSibling->nextSibling, symbolTable);
+	}
 }
 
 void handleExtDef(SyntaxTreeNode* extDefNode, SymbolTable symbolTable) {
 	SymbolTableType* type = handleSpecifier(extDefNode->firstChild, symbolTable);
 	SyntaxTreeNode* secondChild = extDefNode->firstChild->nextSibling;
 	if (secondChild->type == N_SEMI) {
-		free(type);
 	}
 	else if (secondChild->type == N_EXTDECLIST) {
-		handleExtDecList(type, secondChild);
+		handleExtDecList(copySymbolTableType(type), secondChild);
 	}
 	else { // Specifier FunDec CompSt
-		handleFunDec(type, secondChild);
+		handleFunDec(copySymbolTableType(type), secondChild, symbolTable);
 	}
+	freeSymbolTableType(type);
 }
 
 void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, SymbolTable symbolTable) {
@@ -147,10 +180,10 @@ void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, SymbolTable symbolTable) {
 		handleExtDef(syntaxTreeNode, symbolTable);
 		return;
 	}
-	else if (syntaxTreeNode->type == N_DEF) { // local definition
-		handleDef(syntaxTreeNode, symbolTable, false, NULL);
-		return;
-	}
+	//else if (syntaxTreeNode->type == N_DEF) { // local definition
+	//	handleDef(syntaxTreeNode, symbolTable, false, NULL);
+	//	return;
+	//}
 	// TODO: other node types
 
 	SyntaxTreeNode* child = syntaxTreeNode->firstChild;

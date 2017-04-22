@@ -5,3 +5,7 @@ struct {
 	int d;
 } a;
 
+int main(int argc) {
+	return 0;
+}
+

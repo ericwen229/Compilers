@@ -137,6 +137,18 @@ void printType(void* _type) {
 			structField = structField->nextField;
 		}
 	}
+	else if (type->typeType == S_FUNCTION) {
+		printf("<<FUNCTION>>[[");
+		printType((void*)type->type.funcType.returnType);
+		printf("]]");
+		FuncParam* funcParam = type->type.funcType.firstParam;
+		while (funcParam != NULL) {
+			putchar('[');
+			printType(funcParam->paramType);
+			putchar(']');
+			funcParam = funcParam->nextParam;
+		}
+	}
 	else { // TODO: other types
 		printf("<<UNKNOWN>>");
 	}

@@ -29,7 +29,7 @@ typedef struct StructType {
 } StructType;
 
 typedef struct FuncParam {
-	struct SymbolTableType* funcType;
+	struct SymbolTableType* paramType;
 	struct FuncParam* nextParam;
 } FuncParam;
 
