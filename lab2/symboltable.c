@@ -35,8 +35,15 @@ SymbolTableType* copySymbolTableType(SymbolTableType* type) {
 		}
 		return newType;
 	}
+	else if (type->typeType == S_ARRAY) {
+		SymbolTableType* newType = initSymbolTableType();
+		newType->typeType = type->typeType;
+		newType->type.arrayType.len = type->type.arrayType.len;
+		newType->type.arrayType.elementType = copySymbolTableType(type->type.arrayType.elementType);
+		return newType;
+	}
 	else {
-		printf("[[WHY IS ARRAY/STRUCTDEF/FUNCTION BEING COPIED!]]\n");
+		printf("[[WHY IS STRUCTDEF/FUNCTION BEING COPIED!]]\n");
 		return NULL;
 	}
 }

@@ -239,13 +239,20 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 	if (childNum == 1) {
 		SyntaxTreeNode* child = expNode->firstChild;
 		if (child->type == N_ID) {
-			// TODO
+			TrieNode* idNode = child->attr.id;
+			if (idNode->type == NULL) { // undefined identifier
+				char* idStr = retrieveStr(idNode);
+				printf("Error type 1 at Line %d: Undefined identifier \"%s\".\n", child->lineno, idStr);
+				free(idStr);
+				return NULL;
+			}
+			return copySymbolTableType(idNode->type);
 		}
 		else if (child->type == N_INT) {
-			// TODO
+			// TODO: what to return
 		}
 		else if (child->type == N_FLOAT) {
-			// TODO
+			// TODO: what to return
 		}
 	}
 	else if (childNum == 2) {
@@ -257,11 +264,13 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 	else { // childNum == 4
 		// TODO
 	}
+	return NULL;
 }
 
 void handleStmt(SyntaxTreeNode* stmtNode, SymbolTable symbolTable) {
 	if (stmtNode->firstChild->type == N_EXP) {
-		handleExp(stmtNode->firstChild, symbolTable);
+		SymbolTableType* type = handleExp(stmtNode->firstChild, symbolTable);
+		if (type != NULL) freeSymbolTableType(type);
 	}
 	else if (stmtNode->firstChild->type == N_COMPST) {
 		semanticAnalysis(stmtNode->firstChild, symbolTable);
@@ -286,10 +295,10 @@ void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, SymbolTable symbolTable) {
 		handleDef(syntaxTreeNode, symbolTable, false, NULL);
 		return;
 	}
-	//else if (syntaxTreeNode->type == N_STMT) {
-	//	handleStmt(syntaxTreeNode, symbolTable);
-	//	return;
-	//}
+	else if (syntaxTreeNode->type == N_STMT) {
+		handleStmt(syntaxTreeNode, symbolTable);
+		return;
+	}
 	// TODO: other node types
 
 	SyntaxTreeNode* child = syntaxTreeNode->firstChild;

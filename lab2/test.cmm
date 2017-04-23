@@ -1,3 +1,8 @@
 
 int main(int oh, int my, int god);
 
+int main(int a, int b, int c) {
+	d;
+	return 0;	
+}
+
