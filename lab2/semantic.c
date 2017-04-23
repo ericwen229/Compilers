@@ -259,9 +259,35 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 		// TODO
 	}
 	else if (childNum == 3) {
+		SyntaxTreeNode* firstChild = expNode->firstChild;
+		if (firstChild->type == N_ID) { // ID LP RP
+			TrieNode* idNode = firstChild->attr.id;
+			if (idNode->type == NULL) { // undefined function
+				char* idStr = retrieveStr(idNode);
+				printf("Error type 2 at Line %d: Undefined function \"%s\".\n", firstChild->lineno, idStr);
+				free(idStr);
+				return NULL;
+			}
+			// TODO
+			SymbolTableType* funcType = idNode->type;
+			return copySymbolTableType(funcType->type.funcType.returnType);
+		}
 		// TODO
 	}
 	else { // childNum == 4
+		SyntaxTreeNode* firstChild = expNode->firstChild;
+		if (firstChild->type == N_ID) { // ID LP ARGS RP
+			TrieNode* idNode = firstChild->attr.id;
+			if (idNode->type == NULL) { // undefined function
+				char* idStr = retrieveStr(idNode);
+				printf("Error type 2 at Line %d: Undefined function \"%s\".\n", firstChild->lineno, idStr);
+				free(idStr);
+				return NULL;
+			}
+			// TODO
+			SymbolTableType* funcType = idNode->type;
+			return copySymbolTableType(funcType->type.funcType.returnType);
+		}
 		// TODO
 	}
 	return NULL;
