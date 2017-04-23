@@ -171,6 +171,7 @@ void handleExtDef(SyntaxTreeNode* extDefNode, SymbolTable symbolTable) {
 	}
 	else { // Specifier FunDec CompSt
 		handleFunDec(copySymbolTableType(type), secondChild, symbolTable);
+		semanticAnalysis(secondChild->nextSibling, symbolTable);
 	}
 	freeSymbolTableType(type);
 }
@@ -180,10 +181,10 @@ void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, SymbolTable symbolTable) {
 		handleExtDef(syntaxTreeNode, symbolTable);
 		return;
 	}
-	//else if (syntaxTreeNode->type == N_DEF) { // local definition
-	//	handleDef(syntaxTreeNode, symbolTable, false, NULL);
-	//	return;
-	//}
+	else if (syntaxTreeNode->type == N_DEF) { // local definition
+		handleDef(syntaxTreeNode, symbolTable, false, NULL);
+		return;
+	}
 	// TODO: other node types
 
 	SyntaxTreeNode* child = syntaxTreeNode->firstChild;

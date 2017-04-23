@@ -6,6 +6,8 @@ struct A {
 } a;
 
 int main(int foo, float bar, struct A foobar) {
+	int this;
+	float is;
 	return 0;
 }
 
