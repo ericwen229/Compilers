@@ -214,11 +214,11 @@ void handleExtDef(SyntaxTreeNode* extDefNode, SymbolTable symbolTable) {
 	}
 	else { // Specifier FunDec CompSt
 		if (secondChild->nextSibling->type == N_COMPST) { // function definition
-			handleFunDec(copySymbolTableType(type), secondChild, symbolTable, true);
+			handleFunDec(type, secondChild, symbolTable, true);
 			semanticAnalysis(secondChild->nextSibling, symbolTable);
 		}
 		else { // function declaration
-			handleFunDec(copySymbolTableType(type), secondChild, symbolTable, false);
+			handleFunDec(type, secondChild, symbolTable, false);
 		}
 	}
 	freeSymbolTableType(type);
@@ -237,6 +237,16 @@ int numOfChild(SyntaxTreeNode *node) {
 SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 	int childNum = numOfChild(expNode);
 	if (childNum == 1) {
+		SyntaxTreeNode* child = expNode->firstChild;
+		if (child->type == N_ID) {
+			// TODO
+		}
+		else if (child->type == N_INT) {
+			// TODO
+		}
+		else if (child->type == N_FLOAT) {
+			// TODO
+		}
 	}
 	else if (childNum == 2) {
 		// TODO
@@ -276,10 +286,10 @@ void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, SymbolTable symbolTable) {
 		handleDef(syntaxTreeNode, symbolTable, false, NULL);
 		return;
 	}
-	else if (syntaxTreeNode->type == N_STMT) {
-		handleStmt(syntaxTreeNode, symbolTable);
-		return;
-	}
+	//else if (syntaxTreeNode->type == N_STMT) {
+	//	handleStmt(syntaxTreeNode, symbolTable);
+	//	return;
+	//}
 	// TODO: other node types
 
 	SyntaxTreeNode* child = syntaxTreeNode->firstChild;
