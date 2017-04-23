@@ -11,3 +11,5 @@ int main(int foo, float bar, struct A foobar) {
 	return 0;
 }
 
+int main(int what, float the, struct A hell);
+

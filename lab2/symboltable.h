@@ -34,6 +34,7 @@ typedef struct FuncParam {
 } FuncParam;
 
 typedef struct FuncType {
+	bool isDefined;
 	struct SymbolTableType* returnType;
 	FuncParam* firstParam;
 } FuncType;
@@ -53,8 +54,10 @@ typedef struct SymbolTableType {
 
 SymbolTable initSymbolTable();
 TrieNode* insertSymbol(SymbolTable table, char* symbol, SymbolTableType* type);
+SymbolTableType* querySymbol(SymbolTable table, char* symbol);
 SymbolTableType* initSymbolTableType();
 SymbolTableType* copySymbolTableType(SymbolTableType* type);
+bool compareSymbolTableType(SymbolTableType* typeA, SymbolTableType* typeB);
 void freeSymbolTableType(SymbolTableType* type);
 void printSymbolTable(SymbolTable table);
 void freeSymbolTable(SymbolTable table);

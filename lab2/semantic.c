@@ -147,11 +147,11 @@ FuncParam* handleVarList(SyntaxTreeNode* varListNode, SymbolTable symbolTable) {
 	return currParam;
 }
 
-void handleFunDec(SymbolTableType* returnType, SyntaxTreeNode* funDecNode, SymbolTable symbolTable) {
+void handleFunDec(SymbolTableType* returnType, SyntaxTreeNode* funDecNode, SymbolTable symbolTable, bool isDefinition) {
 	SyntaxTreeNode* nameNode = funDecNode->firstChild;
 	SymbolTableType* funcType = initSymbolTableType();
 	funcType->typeType = S_FUNCTION;
-	funDecNode->firstChild->attr.id->type = funcType;
+	funcType->type.funcType.isDefined = isDefinition;
 	funcType->type.funcType.returnType = copySymbolTableType(returnType);
 	if (nameNode->nextSibling->nextSibling->type == N_RP) {
 		funcType->type.funcType.firstParam = NULL;
@@ -159,7 +159,49 @@ void handleFunDec(SymbolTableType* returnType, SyntaxTreeNode* funDecNode, Symbo
 	else {
 		funcType->type.funcType.firstParam = handleVarList(nameNode->nextSibling->nextSibling, symbolTable);
 	}
-}
+
+	if (funDecNode->firstChild->attr.id->type == NULL) {
+		funDecNode->firstChild->attr.id->type = funcType;
+	}
+	else if (((SymbolTableType*)(funDecNode->firstChild->attr.id->type))->type.funcType.isDefined) { // has been defined
+		if (isDefinition) {
+			char* funcName = retrieveStr(funDecNode->firstChild->attr.id);
+			printf("Error type 4 at Line %d: Redefinition of function \"%s\"\n", funDecNode->lineno, funcName);
+			free(funcName);
+		}
+		else {
+			SymbolTableType* defineType = funDecNode->firstChild->attr.id->type;
+			if (!compareSymbolTableType(defineType, funcType)) {
+				char* funcName = retrieveStr(funDecNode->firstChild->attr.id);
+				printf("Error type 19 at Line %d: Function \"%s\" declaration mismatch function definition\n", funDecNode->lineno, funcName);
+				free(funcName);
+			}
+		}
+		freeSymbolTableType(funcType);
+	}
+	else { // has been declared
+		SymbolTableType* declareType = funDecNode->firstChild->attr.id->type;
+		bool same = compareSymbolTableType(declareType, funcType);
+		if (isDefinition) {
+			if (same) {
+				declareType->type.funcType.isDefined = true;
+			}
+			else {
+				char* funcName = retrieveStr(funDecNode->firstChild->attr.id);
+				printf("Error type 19 at Line %d: Function \"%s\" definition mismatch function declaration\n", funDecNode->lineno, funcName);
+				free(funcName);
+			}
+		}
+		else {
+			if (!same) {
+				char* funcName = retrieveStr(funDecNode->firstChild->attr.id);
+				printf("Error type 19 at Line %d: Function \"%s\" declaration mismatch function declaration\n", funDecNode->lineno, funcName);
+				free(funcName);
+			}
+		}
+		freeSymbolTableType(funcType);
+	}
+} 
 
 void handleExtDef(SyntaxTreeNode* extDefNode, SymbolTable symbolTable) {
 	SymbolTableType* type = handleSpecifier(extDefNode->firstChild, symbolTable);
@@ -170,10 +212,58 @@ void handleExtDef(SyntaxTreeNode* extDefNode, SymbolTable symbolTable) {
 		handleExtDecList(copySymbolTableType(type), secondChild);
 	}
 	else { // Specifier FunDec CompSt
-		handleFunDec(copySymbolTableType(type), secondChild, symbolTable);
-		semanticAnalysis(secondChild->nextSibling, symbolTable);
+		if (secondChild->nextSibling->type == N_COMPST) { // function definition
+			handleFunDec(copySymbolTableType(type), secondChild, symbolTable, true);
+			semanticAnalysis(secondChild->nextSibling, symbolTable);
+		}
+		else { // function declaration
+			handleFunDec(copySymbolTableType(type), secondChild, symbolTable, false);
+		}
 	}
 	freeSymbolTableType(type);
+}
+
+int numOfChild(SyntaxTreeNode *node) {
+	SyntaxTreeNode* child = node->firstChild;
+	int count = 0;
+	while (child != NULL) {
+		++count;
+		child = child->nextSibling;
+	}
+	return count;
+}
+
+SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
+	int childNum = numOfChild(expNode);
+	if (childNum == 1) {
+	}
+	else if (childNum == 2) {
+		// TODO
+	}
+	else if (childNum == 3) {
+		// TODO
+	}
+	else { // childNum == 4
+		// TODO
+	}
+}
+
+void handleStmt(SyntaxTreeNode* stmtNode, SymbolTable symbolTable) {
+	if (stmtNode->firstChild->type == N_EXP) {
+		handleExp(stmtNode->firstChild, symbolTable);
+	}
+	else if (stmtNode->firstChild->type == N_COMPST) {
+		semanticAnalysis(stmtNode->firstChild, symbolTable);
+	}
+	else if (stmtNode->firstChild->type == N_RETURN) {
+		// TODO
+	}
+	else if (stmtNode->firstChild->type == N_IF) {
+		// TODO
+	}
+	else { // WHILE LOOP
+		// TODO
+	}
 }
 
 void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, SymbolTable symbolTable) {
@@ -183,6 +273,10 @@ void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, SymbolTable symbolTable) {
 	}
 	else if (syntaxTreeNode->type == N_DEF) { // local definition
 		handleDef(syntaxTreeNode, symbolTable, false, NULL);
+		return;
+	}
+	else if (syntaxTreeNode->type == N_STMT) {
+		handleStmt(syntaxTreeNode, symbolTable);
 		return;
 	}
 	// TODO: other node types
