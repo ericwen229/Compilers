@@ -35,6 +35,7 @@ typedef struct FuncParam {
 
 typedef struct FuncType {
 	bool isDefined;
+	int lineno;
 	struct SymbolTableType* returnType;
 	FuncParam* firstParam;
 } FuncType;
@@ -60,6 +61,7 @@ SymbolTableType* copySymbolTableType(SymbolTableType* type);
 bool compareSymbolTableType(SymbolTableType* typeA, SymbolTableType* typeB);
 void freeSymbolTableType(SymbolTableType* type);
 void printSymbolTable(SymbolTable table);
+void checkUndefinedFunc(SymbolTable table);
 void freeSymbolTable(SymbolTable table);
 
 #endif

@@ -106,89 +106,23 @@ char* retrieveStr(TrieNode* node) {
 	return str;
 }
 
-void printType(void* _type) {
-	if (_type == NULL) {
-		printf("<<NOTYPE>>");
-		return;
-	}
-	SymbolTableType* type = (SymbolTableType*)_type;
-	if (type->typeType == S_BASIC) {
-		if (type->type.basicType == T_INT) {
-			printf("<<INT>>");
-		}
-		else {
-			printf("<<FLOAT>>");
-		}
-	}
-	else if (type->typeType == S_ARRAY) {
-		printf("[%d]", type->type.arrayType.len);
-		printType((void*)type->type.arrayType.elementType);
-	}
-	else if (type->typeType == S_STRUCT) {
-		printf("<<STRUCT %s>>", type->type.structName);
-	}
-	else if (type->typeType == S_STRUCTDEF) {
-		printf("<<STRUCTDEF>>");
-		StructField* structField = type->type.structType.firstField;
-		while (structField != NULL) {
-			printf("[%s|", structField->fieldName);
-			printType((void*)structField->fieldType);
-			putchar(']');
-			structField = structField->nextField;
-		}
-	}
-	else if (type->typeType == S_FUNCTION) {
-		printf("<<FUNCTION>>[[");
-		printType((void*)type->type.funcType.returnType);
-		printf("]]");
-		FuncParam* funcParam = type->type.funcType.firstParam;
-		while (funcParam != NULL) {
-			putchar('[');
-			printType(funcParam->paramType);
-			putchar(']');
-			funcParam = funcParam->nextParam;
-		}
-	}
-	else { // TODO: other types
-		printf("<<UNKNOWN>>");
-	}
-}
-
-void printTrie(TrieNode* trie) {
+void traverseTrie(TrieNode* trie, TrieOp beforeOp, TrieOp afterOp) {
 	if (trie == NULL) {
 		return;
 	}
 
-	if (trie->isEnd) {
-		putchar(' ');
-		char* str = retrieveStr(trie);
-		printf("%s", str);
-		free(str);
-		putchar(' ');
-		printType(trie->type);
-		putchar('\n');
+	if (beforeOp != NULL) {
+		(*beforeOp)(trie);
 	}
 
 	int i = 0;
 	for (i = 0; i < BRANCH_NUM; ++ i) {
-		printTrie(trie->child[i]);
-	}
-}
-
-void freeTrie(TrieNode* trie) {
-	if (trie == NULL) {
-		return;
+		traverseTrie(trie->child[i], beforeOp, afterOp);
 	}
 
-	if (trie->type != NULL) {
-		freeSymbolTableType(trie->type);
-		trie->type = NULL;
+	if (afterOp != NULL) {
+		(*afterOp)(trie);
 	}
 
-	int i = 0;
-	for (i = 0; i < BRANCH_NUM; ++ i) {
-		freeTrie(trie->child[i]);
-	}
-	free(trie);
 }
 

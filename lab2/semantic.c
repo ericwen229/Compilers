@@ -152,6 +152,7 @@ void handleFunDec(SymbolTableType* returnType, SyntaxTreeNode* funDecNode, Symbo
 	SymbolTableType* funcType = initSymbolTableType();
 	funcType->typeType = S_FUNCTION;
 	funcType->type.funcType.isDefined = isDefinition;
+	funcType->type.funcType.lineno = funDecNode->lineno;
 	funcType->type.funcType.returnType = copySymbolTableType(returnType);
 	if (nameNode->nextSibling->nextSibling->type == N_RP) {
 		funcType->type.funcType.firstParam = NULL;
@@ -166,14 +167,14 @@ void handleFunDec(SymbolTableType* returnType, SyntaxTreeNode* funDecNode, Symbo
 	else if (((SymbolTableType*)(funDecNode->firstChild->attr.id->type))->type.funcType.isDefined) { // has been defined
 		if (isDefinition) {
 			char* funcName = retrieveStr(funDecNode->firstChild->attr.id);
-			printf("Error type 4 at Line %d: Redefinition of function \"%s\"\n", funDecNode->lineno, funcName);
+			printf("Error type 4 at Line %d: Redefinition of function \"%s\".\n", funDecNode->lineno, funcName);
 			free(funcName);
 		}
 		else {
 			SymbolTableType* defineType = funDecNode->firstChild->attr.id->type;
 			if (!compareSymbolTableType(defineType, funcType)) {
 				char* funcName = retrieveStr(funDecNode->firstChild->attr.id);
-				printf("Error type 19 at Line %d: Function \"%s\" declaration mismatch function definition\n", funDecNode->lineno, funcName);
+				printf("Error type 19 at Line %d: Function \"%s\" declaration mismatch function definition.\n", funDecNode->lineno, funcName);
 				free(funcName);
 			}
 		}
@@ -188,14 +189,14 @@ void handleFunDec(SymbolTableType* returnType, SyntaxTreeNode* funDecNode, Symbo
 			}
 			else {
 				char* funcName = retrieveStr(funDecNode->firstChild->attr.id);
-				printf("Error type 19 at Line %d: Function \"%s\" definition mismatch function declaration\n", funDecNode->lineno, funcName);
+				printf("Error type 19 at Line %d: Function \"%s\" definition mismatch function declaration.\n", funDecNode->lineno, funcName);
 				free(funcName);
 			}
 		}
 		else {
 			if (!same) {
 				char* funcName = retrieveStr(funDecNode->firstChild->attr.id);
-				printf("Error type 19 at Line %d: Function \"%s\" declaration mismatch function declaration\n", funDecNode->lineno, funcName);
+				printf("Error type 19 at Line %d: Function \"%s\" declaration mismatch function declaration.\n", funDecNode->lineno, funcName);
 				free(funcName);
 			}
 		}

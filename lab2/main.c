@@ -28,6 +28,7 @@ int main(int argc, char* argv[]) {
 	yyparse();
 	if (!gError) {
 		semanticAnalysis(gTree, gSymbolTable);
+		checkUndefinedFunc(gSymbolTable);
 		printSymbolTable(gSymbolTable);
 	}
 	freeTree(gTree);

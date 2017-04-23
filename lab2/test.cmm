@@ -5,11 +5,5 @@ struct A {
 	int d;
 } a;
 
-int main(int foo, float bar, struct A foobar) {
-	int this;
-	float is;
-	return 0;
-}
-
-int main(int what, float the, struct A hell);
+int main(int oh, int my, struct A god);
 

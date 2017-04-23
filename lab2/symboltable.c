@@ -130,11 +130,98 @@ void freeSymbolTableType(SymbolTableType* type) {
 	}
 }
 
+void printType(void* _type) {
+	if (_type == NULL) {
+		printf("<<NOTYPE>>");
+		return;
+	}
+	SymbolTableType* type = (SymbolTableType*)_type;
+	if (type->typeType == S_BASIC) {
+		if (type->type.basicType == T_INT) {
+			printf("<<INT>>");
+		}
+		else {
+			printf("<<FLOAT>>");
+		}
+	}
+	else if (type->typeType == S_ARRAY) {
+		printf("[%d]", type->type.arrayType.len);
+		printType((void*)type->type.arrayType.elementType);
+	}
+	else if (type->typeType == S_STRUCT) {
+		printf("<<STRUCT %s>>", type->type.structName);
+	}
+	else if (type->typeType == S_STRUCTDEF) {
+		printf("<<STRUCTDEF>>");
+		StructField* structField = type->type.structType.firstField;
+		while (structField != NULL) {
+			printf("[%s|", structField->fieldName);
+			printType((void*)structField->fieldType);
+			putchar(']');
+			structField = structField->nextField;
+		}
+	}
+	else if (type->typeType == S_FUNCTION) {
+		printf("<<FUNCTION>>[[");
+		printType((void*)type->type.funcType.returnType);
+		printf("]]");
+		FuncParam* funcParam = type->type.funcType.firstParam;
+		while (funcParam != NULL) {
+			putchar('[');
+			printType(funcParam->paramType);
+			putchar(']');
+			funcParam = funcParam->nextParam;
+		}
+	}
+	else { // TODO: other types
+		printf("<<UNKNOWN>>");
+	}
+}
+
+void printTrieNode(TrieNode* node) {
+	if (node->isEnd) {
+		putchar(' ');
+		char* str = retrieveStr(node);
+		printf("%s", str);
+		free(str);
+		putchar(' ');
+		printType(node->type);
+		putchar('\n');
+	}
+}
+
+void freeTrieNodeType(TrieNode* node) {
+	if (node->type != NULL) {
+		freeSymbolTableType(node->type);
+		node->type = NULL;
+	}
+}
+
+void freeTrieNode(TrieNode* node) {
+	free(node);
+}
+
 void printSymbolTable(SymbolTable table) {
-	printTrie(table);
+	traverseTrie(table, printTrieNode, NULL);
+}
+
+void checkUndefinedFuncNode(TrieNode* node) {
+	SymbolTableType* type = (SymbolTableType*)node->type;
+	if (type == NULL) return;
+	if (type->typeType == S_FUNCTION) {
+		if (!type->type.funcType.isDefined) {
+			char* funcName = retrieveStr(node);
+			printf("Error type 18 at Line %d: Function \"%s\" declared but not defined\n.", type->type.funcType.lineno, funcName);
+			free(funcName);
+		}
+	}
+}
+
+void checkUndefinedFunc(SymbolTable table) {
+	traverseTrie(table, checkUndefinedFuncNode, NULL);
 }
 
 void freeSymbolTable(SymbolTable table) {
-	freeTrie(table);
+	traverseTrie(table, freeTrieNodeType, freeTrieNode);
 }
 
