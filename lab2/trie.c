@@ -182,6 +182,7 @@ void freeTrie(TrieNode* trie) {
 
 	if (trie->type != NULL) {
 		freeSymbolTableType(trie->type);
+		trie->type = NULL;
 	}
 
 	int i = 0;

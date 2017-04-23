@@ -1,11 +1,11 @@
-struct {
+struct A {
 	struct {
 		int c;
 	} b;
 	int d;
 } a;
 
-int main(int argc) {
+int main(int foo, float bar, struct A foobar) {
 	return 0;
 }
 

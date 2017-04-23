@@ -48,6 +48,12 @@ void freeStructField(StructField* field) {
 	free(field);
 }
 
+void freeFuncParam(FuncParam* param) {
+	if (param == NULL) return;
+	freeFuncParam(param->nextParam);
+	free(param);
+}
+
 void freeSymbolTableType(SymbolTableType* type) {
 	if (type == NULL) {
 		printf("NULL TYPE BEING FREED\n");
@@ -59,7 +65,7 @@ void freeSymbolTableType(SymbolTableType* type) {
 	case S_ARRAY: freeSymbolTableType(type->type.arrayType.elementType); free(type); break;
 	case S_STRUCT: free(type->type.structName); free(type); break;
 	case S_STRUCTDEF: freeStructField(type->type.structType.firstField); free(type); break;
-	case S_FUNCTION: break;
+	case S_FUNCTION: freeSymbolTableType(type->type.funcType.returnType); freeFuncParam(type->type.funcType.firstParam); free(type); break;
 	default: printf("??? BEING FREED\n"); break;
 	}
 }
