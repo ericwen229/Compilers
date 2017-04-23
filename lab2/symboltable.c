@@ -60,7 +60,6 @@ void freeSymbolTableType(SymbolTableType* type) {
 		return;
 	}
 	switch (type->typeType) {
-	case S_DEFAULT: free(type); break;
 	case S_BASIC: free(type); break;
 	case S_ARRAY: freeSymbolTableType(type->type.arrayType.elementType); free(type); break;
 	case S_STRUCT: free(type->type.structName); free(type); break;
