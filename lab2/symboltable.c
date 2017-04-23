@@ -16,6 +16,16 @@ SymbolTableType* querySymbol(SymbolTable table, char* symbol) {
 	return (SymbolTableType*)queryTrie(table, symbol);
 }
 
+SymbolTableType* queryField(StructField* field, char* fieldName) {
+	if (field == NULL) return NULL;
+	if (strcmp(field->fieldName, fieldName) == 0) {
+		return copySymbolTableType(field->fieldType);
+	}
+	else {
+		return queryField(field->nextField, fieldName);
+	}
+}
+
 SymbolTableType* initSymbolTableType() {
 	SymbolTableType* newType = (SymbolTableType*)malloc(sizeof(SymbolTableType));
 	newType->typeType = S_DEFAULT;

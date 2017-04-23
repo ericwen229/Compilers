@@ -56,6 +56,7 @@ typedef struct SymbolTableType {
 SymbolTable initSymbolTable();
 TrieNode* insertSymbol(SymbolTable table, char* symbol, SymbolTableType* type);
 SymbolTableType* querySymbol(SymbolTable table, char* symbol);
+SymbolTableType* queryField(StructField* field, char* fieldName);
 SymbolTableType* initSymbolTableType();
 SymbolTableType* copySymbolTableType(SymbolTableType* type);
 bool compareSymbolTableType(SymbolTableType* typeA, SymbolTableType* typeB);

@@ -73,7 +73,16 @@ SymbolTableType* handleSpecifier(SyntaxTreeNode* specifierNode, SymbolTable symb
 void handleVarDec(SymbolTableType* type, SyntaxTreeNode* varDecNode, bool isStruct, StructField* currField, bool isParam, FuncParam* currParam) {
 	SyntaxTreeNode* child = varDecNode->firstChild;
 	if (child->type == N_ID) {
-		child->attr.id->type = type;
+		if (child->attr.id->type != NULL) {
+			char* idName = retrieveStr(child->attr.id);
+			printf("Error type 3 at Line %d: Redefinition of identifier \"%s\".\n", child->lineno, idName);
+			free(idName);
+			freeSymbolTableType(type);
+			return;
+		}
+		else {
+			child->attr.id->type = type;
+		}
 		if (isStruct) {
 			currField->fieldName = retrieveStr(child->attr.id);
 			currField->fieldType = type;
@@ -249,28 +258,65 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 			return copySymbolTableType(idNode->type);
 		}
 		else if (child->type == N_INT) {
-			// TODO: what to return
+			SymbolTableType* newType = initSymbolTableType();
+			newType->typeType = S_BASIC;
+			newType->type.basicType = T_INT;
+			return newType;
 		}
 		else if (child->type == N_FLOAT) {
-			// TODO: what to return
+			SymbolTableType* newType = initSymbolTableType();
+			newType->typeType = S_BASIC;
+			newType->type.basicType = T_FLOAT;
+			return newType;
 		}
 	}
 	else if (childNum == 2) {
-		// TODO
+		return handleExp(expNode->firstChild->nextSibling, symbolTable);
 	}
 	else if (childNum == 3) {
 		SyntaxTreeNode* firstChild = expNode->firstChild;
 		if (firstChild->type == N_ID) { // ID LP RP
-			TrieNode* idNode = firstChild->attr.id;
-			if (idNode->type == NULL) { // undefined function
-				char* idStr = retrieveStr(idNode);
-				printf("Error type 2 at Line %d: Undefined function \"%s\".\n", firstChild->lineno, idStr);
-				free(idStr);
+			TrieNode* funcNode = firstChild->attr.id;
+			if (funcNode->type == NULL) { // undefined function
+				char* funcName = retrieveStr(funcNode);
+				printf("Error type 2 at Line %d: Undefined function \"%s\".\n", firstChild->lineno, funcName);
+				free(funcName);
 				return NULL;
 			}
-			// TODO
-			SymbolTableType* funcType = idNode->type;
+			else if (((SymbolTableType*)(funcNode->type))->typeType != S_FUNCTION) {
+				char* idName = retrieveStr(funcNode);
+				printf("Error type 11 at Line %d: \"%s\" is not a function.\n", firstChild->lineno, idName);
+				free(idName);
+				return NULL;
+			}
+			SymbolTableType* funcType = funcNode->type;
 			return copySymbolTableType(funcType->type.funcType.returnType);
+		}
+		else if (firstChild->type == N_LP) {
+			return handleExp(firstChild->nextSibling, symbolTable);
+		}
+		else if (firstChild->nextSibling->type == N_DOT) { // Exp DOT ID
+			SymbolTableType *type = handleExp(firstChild, symbolTable);
+			if (type == NULL) {
+				return NULL;
+			}
+			else if (type->typeType != S_STRUCT) {
+				SyntaxTreeNode* fieldNode = firstChild->nextSibling->nextSibling;
+				printf("Error type 13 at Line %d: Illegal use of '.'.\n", fieldNode->lineno);
+				freeSymbolTableType(type);
+				return NULL;
+			}
+			else {
+				SyntaxTreeNode* fieldNode = firstChild->nextSibling->nextSibling;
+				char* fieldName = retrieveStr(fieldNode->attr.id);
+				SymbolTableType* structDef = querySymbol(symbolTable, type->type.structName);
+				SymbolTableType* fieldType = queryField(structDef->type.structType.firstField, fieldName);
+				if (fieldType == NULL) {
+					printf("Error type 14 at Line %d: Undefined field \"%s\".\n", fieldNode->lineno, fieldName);
+				}
+				free(fieldName);
+				return fieldType;
+			}
 		}
 		// TODO
 	}

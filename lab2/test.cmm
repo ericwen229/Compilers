@@ -1,8 +1,9 @@
+struct {
+	int foo;
+} bar;
 
-int main(int oh, int my, int god);
-
-int main(int a, int b, int c) {
-	foo();
-	return 0;	
+int main()
+{
+	bar.fo;
 }
 
