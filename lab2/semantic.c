@@ -21,7 +21,6 @@ SymbolTableType* handleStructSpecifier(SyntaxTreeNode* structSpecifierNode, Symb
 	if (tagNode->type == N_TAG) {
 		// current node is StructSpecifier
 		// production is STRUCT Tag
-		// TODO: check definition
 		char* structName = retrieveStr(tagNode->firstChild->attr.id);
 		SymbolTableType* structDef = querySymbol(symbolTable, structName);
 		if (structDef == NULL || structDef->typeType != S_STRUCTDEF) {
