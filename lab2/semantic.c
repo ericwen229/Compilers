@@ -21,6 +21,7 @@ SymbolTableType* handleStructSpecifier(SyntaxTreeNode* structSpecifierNode, Symb
 	if (tagNode->type == N_TAG) {
 		// current node is StructSpecifier
 		// production is STRUCT Tag
+		// TODO: check definition
 		SymbolTableType* newType = initSymbolTableType();
 		newType->typeType = S_STRUCT;
 		newType->type.structName = retrieveStr(tagNode->firstChild->attr.id);
@@ -45,10 +46,17 @@ SymbolTableType* handleStructSpecifier(SyntaxTreeNode* structSpecifierNode, Symb
 			structName = retrieveStr(tagNode->firstChild->attr.id);
 		}
 
-		SymbolTableType* insertType = initSymbolTableType();
-		insertType->typeType = S_STRUCTDEF;
-		insertType->type.structType.firstField = handleStructDefList(tagNode->nextSibling->nextSibling, symbolTable);
-		TrieNode* structDefNode = insertSymbol(symbolTable, structName, insertType);
+		TrieNode* structDefNode = insertSymbol(symbolTable, structName, NULL);
+		if (structDefNode->type != NULL) {
+			printf("Error type 16 at Line %d: Duplicated name \"%s\".\n", tagNode->lineno, structName);
+			// TODO
+		}
+		else {
+			SymbolTableType* insertType = initSymbolTableType();
+			insertType->typeType = S_STRUCTDEF;
+			insertType->type.structType.firstField = handleStructDefList(tagNode->nextSibling->nextSibling, symbolTable);
+			structDefNode->type = insertType;
+		}
 
 		SymbolTableType* newType = initSymbolTableType();
 		newType->typeType = S_STRUCT;
