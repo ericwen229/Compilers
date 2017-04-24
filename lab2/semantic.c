@@ -4,6 +4,8 @@
 
 #include "semantic.h"
 
+static SymbolTableType* gCurrReturnType;
+
 SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable);
 StructField* handleDef(SyntaxTreeNode* defNode, SymbolTable symbolTable, bool isStruct, StructField* currField);
 
@@ -258,6 +260,7 @@ void handleExtDef(SyntaxTreeNode* extDefNode, SymbolTable symbolTable) {
 	}
 	else { // Specifier FunDec CompSt
 		if (secondChild->nextSibling->type == N_COMPST) { // function definition
+			gCurrReturnType = type;
 			handleFunDec(type, secondChild, symbolTable, true);
 			semanticAnalysis(secondChild->nextSibling, symbolTable);
 		}
@@ -435,15 +438,19 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 			else if (secondChild->type == N_RELOP) {
 				SymbolTableType* leftType = handleExp(firstChild, symbolTable);
 				SymbolTableType* rightType = handleExp(thirdChild, symbolTable);
-				if (leftType == NULL || leftType->typeType != S_BASIC || leftType->type.basicType != N_INT ||
-						rightType == NULL || rightType->typeType != S_BASIC || rightType->type.basicType != N_INT) {
+				if (leftType == NULL || leftType->typeType != S_BASIC ||
+						rightType == NULL || rightType->typeType != S_BASIC) {
 					printf("Error type 7 at Line %d: Type mismatched for operands.\n", secondChild->lineno);
 					if (leftType != NULL) freeSymbolTableType(leftType);
 					if (rightType != NULL) freeSymbolTableType(rightType);
 					return NULL;
 				}
+				freeSymbolTableType(leftType);
 				freeSymbolTableType(rightType);
-				return leftType;
+				SymbolTableType* newType = initSymbolTableType();
+				newType->typeType = S_BASIC;
+				newType->type.basicType = N_INT;
+				return newType;
 			}
 			else { // PLUS MINUS STAR DIV
 				SymbolTableType* leftType = handleExp(firstChild, symbolTable);
@@ -501,7 +508,7 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 				return NULL;
 			}
 			else if (indexType->typeType != S_BASIC || indexType->type.basicType != T_INT) {
-				printf("Error type 10 at Line %d: Index is not integer.\n", firstChild->nextSibling->nextSibling->lineno);
+				printf("Error type 12 at Line %d: Index is not integer.\n", firstChild->nextSibling->nextSibling->lineno);
 				freeSymbolTableType(expType);
 				freeSymbolTableType(indexType);
 				return NULL;
@@ -522,13 +529,25 @@ void handleStmt(SyntaxTreeNode* stmtNode, SymbolTable symbolTable) {
 		semanticAnalysis(stmtNode->firstChild, symbolTable);
 	}
 	else if (stmtNode->firstChild->type == N_RETURN) {
-		// TODO
+		SymbolTableType* returnType = handleExp(stmtNode->firstChild->nextSibling, symbolTable);
+		if (!compareSymbolTableType(returnType, gCurrReturnType)) {
+			printf("Error type 8 at Line %d: Type mismatched for return.\n", stmtNode->firstChild->nextSibling->lineno);
+		}
+		if (returnType != NULL) freeSymbolTableType(returnType);
 	}
 	else if (stmtNode->firstChild->type == N_IF) {
-		// TODO
+		SymbolTableType* expType = handleExp(stmtNode->firstChild->nextSibling->nextSibling, symbolTable);
+		if (expType != NULL) freeSymbolTableType(expType);
+		SyntaxTreeNode* firstStmt = stmtNode->firstChild->nextSibling->nextSibling->nextSibling->nextSibling;
+		handleStmt(firstStmt, symbolTable);
+		if (firstStmt->nextSibling != NULL) {
+			handleStmt(firstStmt->nextSibling->nextSibling, symbolTable);
+		}
 	}
 	else { // WHILE LOOP
-		// TODO
+		SymbolTableType* expType = handleExp(stmtNode->firstChild->nextSibling->nextSibling, symbolTable);
+		if (expType != NULL) freeSymbolTableType(expType);
+		handleStmt(stmtNode->firstChild->nextSibling->nextSibling->nextSibling->nextSibling, symbolTable);
 	}
 }
 
@@ -545,7 +564,6 @@ void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, SymbolTable symbolTable) {
 		handleStmt(syntaxTreeNode, symbolTable);
 		return;
 	}
-	// TODO: other node types
 
 	SyntaxTreeNode* child = syntaxTreeNode->firstChild;
 	while (child != NULL) {

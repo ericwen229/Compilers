@@ -1,4 +1,10 @@
-int main() {
-	int a = 1 + 1.5;
-}
+struct Position {
+	float x, y;
+};
+
+int func(int a);
+
+int func(struct Position p);
+
+int main() {}
 
