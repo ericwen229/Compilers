@@ -345,8 +345,28 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 		}
 	}
 	else if (childNum == 2) {
-		// TODO: check type
-		return handleExp(expNode->firstChild->nextSibling, symbolTable);
+		SyntaxTreeNode* firstChild = expNode->firstChild;
+		SymbolTableType* expType = handleExp(expNode->firstChild->nextSibling, symbolTable);
+		if (firstChild->type == N_MINUS) {
+			if (expType == NULL || expType->typeType != S_BASIC) {
+				printf("Error type 7 at Line %d: Type mismatched for operands.\n", firstChild->nextSibling->lineno);
+				if (expType != NULL) freeSymbolTableType(expType);
+				return NULL;
+			}
+			else {
+				return expType;
+			}
+		}
+		else { // N_NOT
+			if (expType == NULL || expType->typeType != S_BASIC || expType->type.basicType != N_INT) {
+				printf("Error type 7 at Line %d: Type mismatched for operands.\n", firstChild->nextSibling->lineno);
+				if (expType != NULL) freeSymbolTableType(expType);
+				return NULL;
+			}
+			else {
+				return expType;
+			}
+		}
 	}
 	else if (childNum == 3) {
 		SyntaxTreeNode* firstChild = expNode->firstChild;
@@ -372,13 +392,10 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 		}
 		else if (firstChild->nextSibling->type == N_DOT) { // Exp DOT ID
 			SymbolTableType *type = handleExp(firstChild, symbolTable);
-			if (type == NULL) {
-				return NULL;
-			}
-			else if (type->typeType != S_STRUCT) {
+			if (type == NULL || type->typeType != S_STRUCT) {
 				SyntaxTreeNode* fieldNode = firstChild->nextSibling->nextSibling;
 				printf("Error type 13 at Line %d: Illegal use of '.'.\n", fieldNode->lineno);
-				freeSymbolTableType(type);
+				if (type != NULL) freeSymbolTableType(type);
 				return NULL;
 			}
 			else {
@@ -416,10 +433,31 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 				}
 			}
 			else if (secondChild->type == N_RELOP) {
-				// TODO
+				SymbolTableType* leftType = handleExp(firstChild, symbolTable);
+				SymbolTableType* rightType = handleExp(thirdChild, symbolTable);
+				if (leftType == NULL || leftType->typeType != S_BASIC || leftType->type.basicType != N_INT ||
+						rightType == NULL || rightType->typeType != S_BASIC || rightType->type.basicType != N_INT) {
+					printf("Error type 7 at Line %d: Type mismatched for operands.\n", secondChild->lineno);
+					if (leftType != NULL) freeSymbolTableType(leftType);
+					if (rightType != NULL) freeSymbolTableType(rightType);
+					return NULL;
+				}
+				freeSymbolTableType(rightType);
+				return leftType;
 			}
 			else { // PLUS MINUS STAR DIV
-				// TODO
+				SymbolTableType* leftType = handleExp(firstChild, symbolTable);
+				SymbolTableType* rightType = handleExp(thirdChild, symbolTable);
+				if (leftType == NULL || leftType->typeType != S_BASIC ||
+						rightType == NULL || rightType->typeType != S_BASIC ||
+						!compareSymbolTableType(leftType, rightType)) {
+					printf("Error type 7 at Line %d: Type mismatched for operands.\n", secondChild->lineno);
+					if (leftType != NULL) freeSymbolTableType(leftType);
+					if (rightType != NULL) freeSymbolTableType(rightType);
+					return NULL;
+				}
+				freeSymbolTableType(rightType);
+				return leftType;
 			}
 		}
 	}
@@ -450,11 +488,11 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 		}
 		else { // Exp LB Exp RB
 			SymbolTableType* expType = handleExp(firstChild, symbolTable);
-			if (expType == NULL) return NULL;
-			else if (expType->typeType != S_ARRAY) {
+			if (expType == NULL || expType->typeType != S_ARRAY) {
 				char* idStr = retrieveStr(firstChild->firstChild->attr.id);
 				printf("Error type 10 at Line %d: \"%s\" is not an array.\n", firstChild->lineno, idStr);
 				free(idStr);
+				if (expType != NULL) freeSymbolTableType(expType);
 				return NULL;
 			}
 			SymbolTableType* indexType = handleExp(firstChild->nextSibling->nextSibling, symbolTable);
@@ -465,8 +503,10 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 			else if (indexType->typeType != S_BASIC || indexType->type.basicType != T_INT) {
 				printf("Error type 10 at Line %d: Index is not integer.\n", firstChild->nextSibling->nextSibling->lineno);
 				freeSymbolTableType(expType);
+				freeSymbolTableType(indexType);
 				return NULL;
 			}
+			freeSymbolTableType(indexType);
 			return copySymbolTableType(expType->type.arrayType.elementType);
 		}
 	}

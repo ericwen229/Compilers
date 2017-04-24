@@ -1,8 +1,4 @@
-struct A {
-	int a;
-};
-
 int main() {
-	1 = 1;
+	int a = 1 + 1.5;
 }
 

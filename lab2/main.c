@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
 	if (!gError) {
 		semanticAnalysis(gTree, gSymbolTable);
 		checkUndefinedFunc(gSymbolTable);
-		printSymbolTable(gSymbolTable);
+		//printSymbolTable(gSymbolTable);
 	}
 	freeTree(gTree);
 	freeSymbolTable(gSymbolTable);
