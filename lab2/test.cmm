@@ -1,8 +1,10 @@
-int func(int a);
+struct Position {
+	float x;
+};
 
-int func(int b) {
-	return 1;
-}
+struct Position {
+	int y;
+};
 
 int main() {}
 

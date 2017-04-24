@@ -51,16 +51,14 @@ SymbolTableType* handleStructSpecifier(SyntaxTreeNode* structSpecifierNode, Symb
 			structName = retrieveStr(tagNode->firstChild->attr.id);
 		}
 
-		TrieNode* structDefNode = insertSymbol(symbolTable, structName, NULL);
-		if (structDefNode->type != NULL) {
+		if (querySymbol(symbolTable, structName) != NULL) {
 			printf("Error type 16 at Line %d: Duplicated name \"%s\".\n", tagNode->lineno, structName);
-			// TODO
 		}
 		else {
 			SymbolTableType* insertType = initSymbolTableType();
 			insertType->typeType = S_STRUCTDEF;
 			insertType->type.structType.firstField = handleStructDefList(tagNode->nextSibling->nextSibling, symbolTable);
-			structDefNode->type = insertType;
+			insertSymbol(symbolTable, structName, insertType);
 		}
 
 		SymbolTableType* newType = initSymbolTableType();
