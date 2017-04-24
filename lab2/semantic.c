@@ -305,6 +305,18 @@ bool handleArgs(SyntaxTreeNode* argsNode, FuncParam* param, SymbolTable symbolTa
 	}
 }
 
+bool isLeftValue(SyntaxTreeNode* expNode) {
+	int childNum = numOfChild(expNode);
+	if ((childNum == 1 && expNode->firstChild->type == N_ID) ||
+			(childNum == 3 && expNode->firstChild->nextSibling->type == N_DOT) ||
+			(childNum == 4 && expNode->firstChild->nextSibling->type == N_LB)) {
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
 SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 	int childNum = numOfChild(expNode);
 	if (childNum == 1) {
@@ -386,6 +398,10 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 			SyntaxTreeNode* secondChild = firstChild->nextSibling;
 			SyntaxTreeNode* thirdChild = secondChild->nextSibling;
 			if (secondChild->type == N_ASSIGNOP) {
+				if (!isLeftValue(firstChild)) {
+					printf("Error type 6 at Line %d: The left-hand side of an assignment must be a variable.\n", firstChild->lineno);
+					return NULL;
+				}
 				SymbolTableType* leftType = handleExp(firstChild, symbolTable);
 				SymbolTableType* rightType = handleExp(thirdChild, symbolTable);
 				if (!compareSymbolTableType(leftType, rightType)) {
