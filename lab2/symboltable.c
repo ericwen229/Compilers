@@ -204,7 +204,7 @@ void printType(void* _type) {
 			funcParam = funcParam->nextParam;
 		}
 	}
-	else { // TODO: other types
+	else {
 		printf("<<UNKNOWN>>");
 	}
 }
@@ -242,7 +242,7 @@ void checkUndefinedFuncNode(TrieNode* node) {
 	if (type->typeType == S_FUNCTION) {
 		if (!type->type.funcType.isDefined) {
 			char* funcName = retrieveStr(node);
-			printf("Error type 18 at Line %d: Function \"%s\" declared but not defined\n.", type->type.funcType.lineno, funcName);
+			printf("Error type 18 at Line %d: Function \"%s\" declared but not defined.\n", type->type.funcType.lineno, funcName);
 			free(funcName);
 		}
 	}

@@ -1,9 +1,8 @@
-struct {
-	int a = 0;
-	float a;
-} b;
+int func(int a);
 
-int main() {
-	return 0;
+int func(int b) {
+	return 1;
 }
+
+int main() {}
 

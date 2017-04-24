@@ -22,6 +22,11 @@ SymbolTableType* handleStructSpecifier(SyntaxTreeNode* structSpecifierNode, Symb
 		// current node is StructSpecifier
 		// production is STRUCT Tag
 		// TODO: check definition
+		char* structName = retrieveStr(tagNode->firstChild->attr.id);
+		SymbolTableType* structDef = querySymbol(symbolTable, structName);
+		if (structDef == NULL || structDef->typeType != S_STRUCTDEF) {
+			printf("Error type 17 at Line %d: Undefined structure \"%s\".\n", tagNode->lineno, structName);
+		}
 		SymbolTableType* newType = initSymbolTableType();
 		newType->typeType = S_STRUCT;
 		newType->type.structName = retrieveStr(tagNode->firstChild->attr.id);
@@ -78,9 +83,13 @@ SymbolTableType* handleSpecifier(SyntaxTreeNode* specifierNode, SymbolTable symb
 	}
 }
 
-void handleVarDec(SymbolTableType* type, SyntaxTreeNode* varDecNode, bool isStruct, StructField* currField, bool isParam, FuncParam* currParam) {
+void handleVarDec(SymbolTableType* type, SyntaxTreeNode* varDecNode, bool isStruct, StructField* currField, bool isParam, FuncParam* currParam, bool isDefinition) {
 	SyntaxTreeNode* child = varDecNode->firstChild;
 	if (child->type == N_ID) {
+		if (isParam && !isDefinition) {
+			currParam->paramType = type;
+			return;
+		}
 		if (child->attr.id->type != NULL) {
 			char* idName = retrieveStr(child->attr.id);
 			if (!isStruct) {
@@ -96,6 +105,7 @@ void handleVarDec(SymbolTableType* type, SyntaxTreeNode* varDecNode, bool isStru
 		else {
 			child->attr.id->type = type;
 		}
+
 		if (isStruct) {
 			currField->fieldName = retrieveStr(child->attr.id);
 			currField->fieldType = type;
@@ -109,13 +119,13 @@ void handleVarDec(SymbolTableType* type, SyntaxTreeNode* varDecNode, bool isStru
 		array->typeType = S_ARRAY;
 		array->type.arrayType.len = child->nextSibling->nextSibling->attr.intValue;
 		array->type.arrayType.elementType = type;
-		handleVarDec(array, child, isStruct, currField, isParam, currParam);
+		handleVarDec(array, child, isStruct, currField, isParam, currParam, isDefinition);
 	}
 }
 
 void handleDec(SymbolTableType* type, SyntaxTreeNode* decNode, bool isStruct, StructField* currField) {
 	SyntaxTreeNode* varDecNode = decNode->firstChild;
-	handleVarDec(type, varDecNode, isStruct, currField, false, NULL);
+	handleVarDec(type, varDecNode, isStruct, currField, false, NULL, false);
 	if (isStruct && varDecNode->nextSibling != NULL) {
 		printf("Error type 15 at Line %d: Trying to initialize struct field.\n", varDecNode->nextSibling->nextSibling->lineno);
 	}
@@ -147,24 +157,24 @@ StructField* handleDef(SyntaxTreeNode* defNode, SymbolTable symbolTable, bool is
 
 void handleExtDecList(SymbolTableType* type, SyntaxTreeNode* extDecListNode) {
 	SyntaxTreeNode* varDecNode = extDecListNode->firstChild;
-	handleVarDec(type, varDecNode, false, NULL, false, NULL);
+	handleVarDec(type, varDecNode, false, NULL, false, NULL, false);
 	if (varDecNode->nextSibling != NULL) {
 		handleExtDecList(copySymbolTableType(type), varDecNode->nextSibling->nextSibling);
 	}
 }
 
-FuncParam* handleParamDec(SyntaxTreeNode* paramDecNode, SymbolTable symbolTable) {
+FuncParam* handleParamDec(SyntaxTreeNode* paramDecNode, SymbolTable symbolTable, bool isDefinition) {
 	SymbolTableType* type = handleSpecifier(paramDecNode->firstChild, symbolTable);
 	FuncParam* currParam = (FuncParam*)malloc(sizeof(FuncParam));
 	currParam->nextParam = NULL;
-	handleVarDec(type, paramDecNode->firstChild->nextSibling, false, NULL, true, currParam);
+	handleVarDec(type, paramDecNode->firstChild->nextSibling, false, NULL, true, currParam, isDefinition);
 	return currParam;
 }
 
-FuncParam* handleVarList(SyntaxTreeNode* varListNode, SymbolTable symbolTable) {
-	FuncParam* currParam = handleParamDec(varListNode->firstChild, symbolTable);
+FuncParam* handleVarList(SyntaxTreeNode* varListNode, SymbolTable symbolTable, bool isDefinition) {
+	FuncParam* currParam = handleParamDec(varListNode->firstChild, symbolTable, isDefinition);
 	if (varListNode->firstChild->nextSibling != NULL) {
-		currParam->nextParam = handleVarList(varListNode->firstChild->nextSibling->nextSibling, symbolTable);
+		currParam->nextParam = handleVarList(varListNode->firstChild->nextSibling->nextSibling, symbolTable, isDefinition);
 	}
 	else {
 		currParam->nextParam = NULL;
@@ -183,7 +193,7 @@ void handleFunDec(SymbolTableType* returnType, SyntaxTreeNode* funDecNode, Symbo
 		funcType->type.funcType.firstParam = NULL;
 	}
 	else {
-		funcType->type.funcType.firstParam = handleVarList(nameNode->nextSibling->nextSibling, symbolTable);
+		funcType->type.funcType.firstParam = handleVarList(nameNode->nextSibling->nextSibling, symbolTable, isDefinition);
 	}
 
 	if (funDecNode->firstChild->attr.id->type == NULL) {
