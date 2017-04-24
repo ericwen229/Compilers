@@ -1,9 +1,8 @@
 struct {
-	int foo;
-} bar;
+	int a = 0;
+} b;
 
-int main()
-{
-	bar.fo;
+int main() {
+	return 0;
 }
 

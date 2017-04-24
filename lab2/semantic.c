@@ -75,7 +75,12 @@ void handleVarDec(SymbolTableType* type, SyntaxTreeNode* varDecNode, bool isStru
 	if (child->type == N_ID) {
 		if (child->attr.id->type != NULL) {
 			char* idName = retrieveStr(child->attr.id);
-			printf("Error type 3 at Line %d: Redefinition of identifier \"%s\".\n", child->lineno, idName);
+			if (!isStruct) {
+				printf("Error type 3 at Line %d: Redefinition of identifier \"%s\".\n", child->lineno, idName);
+			}
+			else {
+				printf("Error type 15 at Line %d: Redefinition of field \"%s\".\n", child->lineno, idName);
+			}
 			free(idName);
 			freeSymbolTableType(type);
 			return;
@@ -103,6 +108,9 @@ void handleVarDec(SymbolTableType* type, SyntaxTreeNode* varDecNode, bool isStru
 void handleDec(SymbolTableType* type, SyntaxTreeNode* decNode, bool isStruct, StructField* currField) {
 	SyntaxTreeNode* varDecNode = decNode->firstChild;
 	handleVarDec(type, varDecNode, isStruct, currField, false, NULL);
+	if (isStruct && varDecNode->nextSibling != NULL) {
+		printf("Error type 15 at Line %d: Trying to initialize struct field.\n", varDecNode->nextSibling->nextSibling->lineno);
+	}
 }
 
 StructField* handleDecList(SymbolTableType* type, SyntaxTreeNode* decListNode, bool isStruct, StructField* currField) {
@@ -243,6 +251,36 @@ int numOfChild(SyntaxTreeNode *node) {
 	return count;
 }
 
+SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable);
+
+bool handleArgs(SyntaxTreeNode* argsNode, FuncParam* param, SymbolTable symbolTable) {
+	if (argsNode == NULL && param == NULL) {
+		return true;
+	}
+	else if (argsNode == NULL || param == NULL) {
+		return false;
+	}
+	SymbolTableType* currParamType = param->paramType;
+	SymbolTableType* currArgType = handleExp(argsNode->firstChild, symbolTable);
+	if (currArgType == NULL) {
+		// TODO: whether to return false
+		return true;
+	}
+	if (!compareSymbolTableType(currParamType, currArgType)) {
+		freeSymbolTableType(currArgType);
+		return false;
+	}
+	else {
+		freeSymbolTableType(currArgType);
+		if (argsNode->firstChild->nextSibling == NULL) {
+			return handleArgs(NULL, param->nextParam, symbolTable);
+		}
+		else {
+			return handleArgs(argsNode->firstChild->nextSibling->nextSibling, param->nextParam, symbolTable);
+		}
+	}
+}
+
 SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 	int childNum = numOfChild(expNode);
 	if (childNum == 1) {
@@ -271,6 +309,7 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 		}
 	}
 	else if (childNum == 2) {
+		// TODO: check type
 		return handleExp(expNode->firstChild->nextSibling, symbolTable);
 	}
 	else if (childNum == 3) {
@@ -318,7 +357,7 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 				return fieldType;
 			}
 		}
-		// TODO
+		// TODO: more productions
 	}
 	else { // childNum == 4
 		SyntaxTreeNode* firstChild = expNode->firstChild;
@@ -330,11 +369,42 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 				free(idStr);
 				return NULL;
 			}
-			// TODO
+			else if (((SymbolTableType*)(idNode->type))->typeType != S_FUNCTION) {
+				char* idName = retrieveStr(idNode);
+				printf("Error type 11 at Line %d: \"%s\" is not a function.\n", firstChild->lineno, idName);
+				free(idName);
+				return NULL;
+			}
 			SymbolTableType* funcType = idNode->type;
-			return copySymbolTableType(funcType->type.funcType.returnType);
+			if (handleArgs(firstChild->nextSibling->nextSibling, funcType->type.funcType.firstParam, symbolTable)) {
+				return copySymbolTableType(funcType->type.funcType.returnType);
+			}
+			else {
+				printf("Error type 9 at Line %d: Function paramaters mismatch.\n", firstChild->nextSibling->nextSibling->lineno);
+				return NULL;
+			}
 		}
-		// TODO
+		else { // Exp LB Exp RB
+			SymbolTableType* expType = handleExp(firstChild, symbolTable);
+			if (expType == NULL) return NULL;
+			else if (expType->typeType != S_ARRAY) {
+				char* idStr = retrieveStr(firstChild->firstChild->attr.id);
+				printf("Error type 10 at Line %d: \"%s\" is not an array.\n", firstChild->lineno, idStr);
+				free(idStr);
+				return NULL;
+			}
+			SymbolTableType* indexType = handleExp(firstChild->nextSibling->nextSibling, symbolTable);
+			if (indexType == NULL) {
+				freeSymbolTableType(expType);
+				return NULL;
+			}
+			else if (indexType->typeType != S_BASIC || indexType->type.basicType != T_INT) {
+				printf("Error type 10 at Line %d: Index is not integer.\n", firstChild->nextSibling->nextSibling->lineno);
+				freeSymbolTableType(expType);
+				return NULL;
+			}
+			return copySymbolTableType(expType->type.arrayType.elementType);
+		}
 	}
 	return NULL;
 }

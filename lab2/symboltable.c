@@ -58,12 +58,26 @@ SymbolTableType* copySymbolTableType(SymbolTableType* type) {
 	}
 }
 
+bool compareSymbolTableType(SymbolTableType* typeA, SymbolTableType* typeB);
+
 bool compareArrayType(ArrayType* typeA, ArrayType* typeB) {
-	return false;
+	if (typeA == typeB) {
+		return true;
+	}
+	return compareSymbolTableType(typeA->elementType, typeB->elementType);
 }
 
-bool compareStructType(StructType* typeA, StructType* typeB) {
-	return false;
+bool compareStructField(StructField* fieldA, StructField* fieldB) {
+	if (fieldA == fieldB) {
+		return true;
+	}
+	if (fieldA == NULL || fieldB == NULL) {
+		return false;
+	}
+	if (!compareSymbolTableType(fieldA->fieldType, fieldB->fieldType)) {
+		return false;
+	}
+	return compareStructField(fieldA->nextField, fieldB->nextField);
 }
 
 bool compareFuncParam(FuncParam* paramA, FuncParam* paramB) {
@@ -108,7 +122,7 @@ bool compareSymbolTableType(SymbolTableType* typeA, SymbolTableType* typeB) {
 	case S_ARRAY:
 		return compareArrayType(&(typeA->type.arrayType), &(typeB->type.arrayType));
 	case S_STRUCTDEF:
-		return compareStructType(&(typeA->type.structType), &(typeB->type.structType));
+		return compareStructField(typeA->type.structType.firstField, typeB->type.structType.firstField);
 	case S_STRUCT:
 		return (strcmp(typeA->type.structName, typeB->type.structName) == 0);
 	case S_FUNCTION:
