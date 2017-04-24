@@ -4,6 +4,7 @@
 
 #include "semantic.h"
 
+SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable);
 StructField* handleDef(SyntaxTreeNode* defNode, SymbolTable symbolTable, bool isStruct, StructField* currField);
 
 StructField* handleStructDefList(SyntaxTreeNode* defListNode, SymbolTable symbolTable) {
@@ -120,17 +121,28 @@ void handleVarDec(SymbolTableType* type, SyntaxTreeNode* varDecNode, bool isStru
 	}
 }
 
-void handleDec(SymbolTableType* type, SyntaxTreeNode* decNode, bool isStruct, StructField* currField) {
+void handleDec(SymbolTableType* type, SyntaxTreeNode* decNode, SymbolTable symbolTable, bool isStruct, StructField* currField) {
 	SyntaxTreeNode* varDecNode = decNode->firstChild;
 	handleVarDec(type, varDecNode, isStruct, currField, false, NULL, false);
-	if (isStruct && varDecNode->nextSibling != NULL) {
-		printf("Error type 15 at Line %d: Trying to initialize struct field.\n", varDecNode->nextSibling->nextSibling->lineno);
+	if (varDecNode->nextSibling != NULL) {
+		if (isStruct) {
+			printf("Error type 15 at Line %d: Trying to initialize struct field.\n", varDecNode->nextSibling->nextSibling->lineno);
+			return;
+		}
+		SyntaxTreeNode* expNode = varDecNode->nextSibling->nextSibling;
+		SymbolTableType* expType = handleExp(expNode, symbolTable);
+		if (!compareSymbolTableType(type, expType)) {
+			printf("Error type 5 at Line %d: Type mismatched for assignment.\n", expNode->lineno);
+		}
+		if (expType != NULL) {
+			freeSymbolTableType(expType);
+		}
 	}
 }
 
-StructField* handleDecList(SymbolTableType* type, SyntaxTreeNode* decListNode, bool isStruct, StructField* currField) {
+StructField* handleDecList(SymbolTableType* type, SyntaxTreeNode* decListNode, SymbolTable symbolTable, bool isStruct, StructField* currField) {
 	SyntaxTreeNode* decNode = decListNode->firstChild;
-	handleDec(copySymbolTableType(type), decListNode->firstChild, isStruct, currField);
+	handleDec(copySymbolTableType(type), decListNode->firstChild, symbolTable, isStruct, currField);
 	if (decNode->nextSibling != NULL) {
 		StructField* nextField = NULL;
 		if (isStruct) {
@@ -138,7 +150,7 @@ StructField* handleDecList(SymbolTableType* type, SyntaxTreeNode* decListNode, b
 			currField->nextField = nextField;
 			nextField->nextField = NULL;
 		}
-		return handleDecList(type, decNode->nextSibling->nextSibling, isStruct, nextField);
+		return handleDecList(type, decNode->nextSibling->nextSibling, symbolTable, isStruct, nextField);
 	}
 	else {
 		return currField;
@@ -147,7 +159,7 @@ StructField* handleDecList(SymbolTableType* type, SyntaxTreeNode* decListNode, b
 
 StructField* handleDef(SyntaxTreeNode* defNode, SymbolTable symbolTable, bool isStruct, StructField* currField) {
 	SymbolTableType* type = handleSpecifier(defNode->firstChild, symbolTable);
-	StructField* field = handleDecList(type, defNode->firstChild->nextSibling, isStruct, currField);
+	StructField* field = handleDecList(type, defNode->firstChild->nextSibling, symbolTable, isStruct, currField);
 	freeSymbolTableType(type);
 	return field;
 }
@@ -266,8 +278,6 @@ int numOfChild(SyntaxTreeNode *node) {
 	return count;
 }
 
-SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable);
-
 bool handleArgs(SyntaxTreeNode* argsNode, FuncParam* param, SymbolTable symbolTable) {
 	if (argsNode == NULL && param == NULL) {
 		return true;
@@ -371,7 +381,31 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 				return fieldType;
 			}
 		}
-		// TODO: more productions
+		else {
+			SyntaxTreeNode* firstChild = expNode->firstChild;
+			SyntaxTreeNode* secondChild = firstChild->nextSibling;
+			SyntaxTreeNode* thirdChild = secondChild->nextSibling;
+			if (secondChild->type == N_ASSIGNOP) {
+				SymbolTableType* leftType = handleExp(firstChild, symbolTable);
+				SymbolTableType* rightType = handleExp(thirdChild, symbolTable);
+				if (!compareSymbolTableType(leftType, rightType)) {
+					printf("Error type 5 at Line %d: Type mismatched for assignment.\n", secondChild->lineno);
+					if (leftType != NULL) freeSymbolTableType(leftType);
+					if (rightType != NULL) freeSymbolTableType(rightType);
+					return NULL;
+				}
+				else {
+					freeSymbolTableType(rightType);
+					return leftType;
+				}
+			}
+			else if (secondChild->type == N_RELOP) {
+				// TODO
+			}
+			else { // PLUS MINUS STAR DIV
+				// TODO
+			}
+		}
 	}
 	else { // childNum == 4
 		SyntaxTreeNode* firstChild = expNode->firstChild;

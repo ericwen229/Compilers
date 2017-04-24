@@ -108,7 +108,7 @@ bool compareFuncType(FuncType* typeA, FuncType* typeB) {
 
 bool compareSymbolTableType(SymbolTableType* typeA, SymbolTableType* typeB) {
 	if (typeA == typeB) {
-		return true;
+		return !(typeA == NULL);
 	}
 	if (typeA == NULL || typeB == NULL) {
 		return false;
