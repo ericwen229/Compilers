@@ -278,8 +278,7 @@ bool handleArgs(SyntaxTreeNode* argsNode, FuncParam* param, SymbolTable symbolTa
 	SymbolTableType* currParamType = param->paramType;
 	SymbolTableType* currArgType = handleExp(argsNode->firstChild, symbolTable);
 	if (currArgType == NULL) {
-		// TODO: whether to return false
-		return true;
+		return false;
 	}
 	if (!compareSymbolTableType(currParamType, currArgType)) {
 		freeSymbolTableType(currArgType);
