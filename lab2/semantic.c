@@ -424,10 +424,18 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 				}
 				SymbolTableType* leftType = handleExp(firstChild, symbolTable);
 				SymbolTableType* rightType = handleExp(thirdChild, symbolTable);
-				if (!compareSymbolTableType(leftType, rightType)) {
+				if (leftType == NULL || rightType == NULL) {
 					printf("Error type 5 at Line %d: Type mismatched for assignment.\n", secondChild->lineno);
 					if (leftType != NULL) freeSymbolTableType(leftType);
 					if (rightType != NULL) freeSymbolTableType(rightType);
+					return NULL;
+				}
+				SymbolTableType* leftRealType = (leftType->typeType == S_STRUCT)? querySymbol(symbolTable, leftType->type.structName): leftType;
+				SymbolTableType* rightRealType = (rightType->typeType == S_STRUCT)? querySymbol(symbolTable, rightType->type.structName): rightType;
+				if (!compareSymbolTableType(leftRealType, rightRealType)) {
+					printf("Error type 5 at Line %d: Type mismatched for assignment.\n", secondChild->lineno);
+					freeSymbolTableType(leftType);
+					freeSymbolTableType(rightType);
 					return NULL;
 				}
 				else {
