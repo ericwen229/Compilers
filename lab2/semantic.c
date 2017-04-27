@@ -210,6 +210,12 @@ void handleFunDec(SymbolTableType* returnType, SyntaxTreeNode* funDecNode, Symbo
 	if (funDecNode->firstChild->attr.id->type == NULL) {
 		funDecNode->firstChild->attr.id->type = funcType;
 	}
+	else if (((SymbolTableType*)(funDecNode->firstChild->attr.id->type))->typeType != S_FUNCTION) {
+		char* funcName = retrieveStr(funDecNode->firstChild->attr.id);
+		printf("Error type 3 at Line %d: Redefinition of identifier \"%s\".\n", funDecNode->firstChild->lineno, funcName);
+		free(funcName);
+		freeSymbolTableType(funcType);
+	}
 	else if (((SymbolTableType*)(funDecNode->firstChild->attr.id->type))->type.funcType.isDefined) { // has been defined
 		if (isDefinition) {
 			char* funcName = retrieveStr(funDecNode->firstChild->attr.id);

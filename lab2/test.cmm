@@ -1,8 +1,8 @@
+int foo;
+
 int foo(int bar[1][2]) {
 }
 
 int main() {
-	int fooBar[2];
-	foo(fooBar);
 }
 
