@@ -53,7 +53,8 @@ SymbolTableType* copySymbolTableType(SymbolTableType* type) {
 		return newType;
 	}
 	else {
-		printf("[[WHY IS STRUCTDEF/FUNCTION BEING COPIED!]]\n");
+		// TODO
+		//printf("[[WHY IS STRUCTDEF/FUNCTION BEING COPIED!]]\n");
 		return NULL;
 	}
 }
