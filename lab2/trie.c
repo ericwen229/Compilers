@@ -87,6 +87,10 @@ TrieNode* insertTrie(TrieNode* node, char* str, void* type) {
 }
 
 int getDepth(TrieNode* node) {
+	//if (node == NULL) {
+	//	printf("ERROR");
+	//	return 0;
+	//}
 	if (node->parent == NULL) {
 		return 0;
 	}

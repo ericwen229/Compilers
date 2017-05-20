@@ -510,9 +510,7 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 		else { // Exp LB Exp RB
 			SymbolTableType* expType = handleExp(firstChild, symbolTable);
 			if (expType == NULL || expType->typeType != S_ARRAY) {
-				char* idStr = retrieveStr(firstChild->firstChild->attr.id);
-				printf("Error type 10 at Line %d: \"%s\" is not an array.\n", firstChild->lineno, idStr);
-				free(idStr);
+				printf("Error type 10 at Line %d: Illegal use of \"[]\".\n", firstChild->lineno);
 				if (expType != NULL) freeSymbolTableType(expType);
 				return NULL;
 			}

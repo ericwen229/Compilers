@@ -1,13 +1,27 @@
-int math_calculator(int a, int b, int c){
-	return a + b * c;
-}
-
-float math_calculator(float a1, float b1, float c1, float d1){
-	return a1 * b1 + c1 * d1;
-}
-
-int main()
+int bbSort(int n)
 {
-	return math_calculator(5, 4, 7);
+	int exchange;
+	int i, j, temp;
+	int p[50];
+	while (i < n)
+	{
+		i = i + 1;
+		exchange = 1;
+
+		while (j < n)
+		{
+			j = j + 1;
+			if (p[j] > p[j + 1])
+			{
+				temp = p[j + 1];
+				p[j + 1] = p[j];	
+				p[j] = temp;
+				exchange = 0;
+			}
+		}
+		if (exchange() == 0)
+			p[i] = -1;
+	}
+	return 0;
 }
 
