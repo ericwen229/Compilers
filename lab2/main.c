@@ -32,10 +32,10 @@ int main(int argc, char* argv[]) {
 		semanticAnalysis(gTree, gSymbolTable, gFunctionTable);
 		checkUndefinedFunc(gFunctionTable);
 		//printSymbolTable(gSymbolTable);
-		//printf("-----\n");
 		//printSymbolTable(gFunctionTable);
 	}
 	freeTree(gTree);
 	freeSymbolTable(gSymbolTable);
+	freeSymbolTable(gFunctionTable);
 	return 0;
 }
