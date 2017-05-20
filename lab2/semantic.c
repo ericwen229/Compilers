@@ -6,15 +6,15 @@
 
 static SymbolTableType* gCurrReturnType;
 
-SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable);
-StructField* handleDef(SyntaxTreeNode* defNode, SymbolTable symbolTable, bool isStruct, StructField* currField);
+SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable, SymbolTable functionTable);
+StructField* handleDef(SyntaxTreeNode* defNode, SymbolTable symbolTable, SymbolTable functionTable, bool isStruct, StructField* currField);
 
 StructField* handleStructDefList(SyntaxTreeNode* defListNode, SymbolTable symbolTable) {
 	if (defListNode->firstChild == NULL) {
 		return NULL;
 	}
 	StructField* currField = (StructField*)malloc(sizeof(StructField));
-	StructField* tailField = handleDef(defListNode->firstChild, symbolTable, true, currField);
+	StructField* tailField = handleDef(defListNode->firstChild, symbolTable, NULL, true, currField);
 	tailField->nextField = handleStructDefList(defListNode->firstChild->nextSibling, symbolTable);
 	return currField;
 }
@@ -123,7 +123,7 @@ void handleVarDec(SymbolTableType* type, SyntaxTreeNode* varDecNode, bool isStru
 	}
 }
 
-void handleDec(SymbolTableType* type, SyntaxTreeNode* decNode, SymbolTable symbolTable, bool isStruct, StructField* currField) {
+void handleDec(SymbolTableType* type, SyntaxTreeNode* decNode, SymbolTable symbolTable, SymbolTable functionTable, bool isStruct, StructField* currField) {
 	SyntaxTreeNode* varDecNode = decNode->firstChild;
 	handleVarDec(type, varDecNode, isStruct, currField, false, NULL, false);
 	if (varDecNode->nextSibling != NULL) {
@@ -132,7 +132,7 @@ void handleDec(SymbolTableType* type, SyntaxTreeNode* decNode, SymbolTable symbo
 			return;
 		}
 		SyntaxTreeNode* expNode = varDecNode->nextSibling->nextSibling;
-		SymbolTableType* expType = handleExp(expNode, symbolTable);
+		SymbolTableType* expType = handleExp(expNode, symbolTable, functionTable);
 		if (!compareSymbolTableType(type, expType)) {
 			printf("Error type 5 at Line %d: Type mismatched for assignment.\n", expNode->lineno);
 		}
@@ -142,9 +142,9 @@ void handleDec(SymbolTableType* type, SyntaxTreeNode* decNode, SymbolTable symbo
 	}
 }
 
-StructField* handleDecList(SymbolTableType* type, SyntaxTreeNode* decListNode, SymbolTable symbolTable, bool isStruct, StructField* currField) {
+StructField* handleDecList(SymbolTableType* type, SyntaxTreeNode* decListNode, SymbolTable symbolTable, SymbolTable functionTable, bool isStruct, StructField* currField) {
 	SyntaxTreeNode* decNode = decListNode->firstChild;
-	handleDec(copySymbolTableType(type), decListNode->firstChild, symbolTable, isStruct, currField);
+	handleDec(copySymbolTableType(type), decListNode->firstChild, symbolTable, functionTable, isStruct, currField);
 	if (decNode->nextSibling != NULL) {
 		StructField* nextField = NULL;
 		if (isStruct) {
@@ -152,16 +152,16 @@ StructField* handleDecList(SymbolTableType* type, SyntaxTreeNode* decListNode, S
 			currField->nextField = nextField;
 			nextField->nextField = NULL;
 		}
-		return handleDecList(type, decNode->nextSibling->nextSibling, symbolTable, isStruct, nextField);
+		return handleDecList(type, decNode->nextSibling->nextSibling, symbolTable, functionTable, isStruct, nextField);
 	}
 	else {
 		return currField;
 	}
 }
 
-StructField* handleDef(SyntaxTreeNode* defNode, SymbolTable symbolTable, bool isStruct, StructField* currField) {
+StructField* handleDef(SyntaxTreeNode* defNode, SymbolTable symbolTable, SymbolTable functionTable, bool isStruct, StructField* currField) {
 	SymbolTableType* type = handleSpecifier(defNode->firstChild, symbolTable);
-	StructField* field = handleDecList(type, defNode->firstChild->nextSibling, symbolTable, isStruct, currField);
+	StructField* field = handleDecList(type, defNode->firstChild->nextSibling, symbolTable, functionTable, isStruct, currField);
 	freeSymbolTableType(type);
 	return field;
 }
@@ -193,7 +193,7 @@ FuncParam* handleVarList(SyntaxTreeNode* varListNode, SymbolTable symbolTable, b
 	return currParam;
 }
 
-void handleFunDec(SymbolTableType* returnType, SyntaxTreeNode* funDecNode, SymbolTable symbolTable, bool isDefinition) {
+void handleFunDec(SymbolTableType* returnType, SyntaxTreeNode* funDecNode, SymbolTable symbolTable, SymbolTable functionTable, bool isDefinition) {
 	SyntaxTreeNode* nameNode = funDecNode->firstChild;
 	SymbolTableType* funcType = initSymbolTableType();
 	funcType->typeType = S_FUNCTION;
@@ -206,6 +206,12 @@ void handleFunDec(SymbolTableType* returnType, SyntaxTreeNode* funDecNode, Symbo
 	else {
 		funcType->type.funcType.firstParam = handleVarList(nameNode->nextSibling->nextSibling, symbolTable, isDefinition);
 	}
+
+	// transfer funtion from symbol table to function table
+	char* funcName = retrieveStr(funDecNode->firstChild->attr.id);
+	SymbolTableType* originalType = querySymbol(functionTable, funcName);
+	funDecNode->firstChild->attr.id = insertSymbol(functionTable, funcName, originalType);
+	free(funcName);
 
 	if (funDecNode->firstChild->attr.id->type == NULL) {
 		funDecNode->firstChild->attr.id->type = funcType;
@@ -256,7 +262,7 @@ void handleFunDec(SymbolTableType* returnType, SyntaxTreeNode* funDecNode, Symbo
 	}
 } 
 
-void handleExtDef(SyntaxTreeNode* extDefNode, SymbolTable symbolTable) {
+void handleExtDef(SyntaxTreeNode* extDefNode, SymbolTable symbolTable, SymbolTable functionTable) {
 	SymbolTableType* type = handleSpecifier(extDefNode->firstChild, symbolTable);
 	SyntaxTreeNode* secondChild = extDefNode->firstChild->nextSibling;
 	if (secondChild->type == N_SEMI) {
@@ -267,11 +273,11 @@ void handleExtDef(SyntaxTreeNode* extDefNode, SymbolTable symbolTable) {
 	else { // Specifier FunDec CompSt
 		if (secondChild->nextSibling->type == N_COMPST) { // function definition
 			gCurrReturnType = type;
-			handleFunDec(type, secondChild, symbolTable, true);
-			semanticAnalysis(secondChild->nextSibling, symbolTable);
+			handleFunDec(type, secondChild, symbolTable, functionTable, true);
+			semanticAnalysis(secondChild->nextSibling, symbolTable, functionTable);
 		}
 		else { // function declaration
-			handleFunDec(type, secondChild, symbolTable, false);
+			handleFunDec(type, secondChild, symbolTable, functionTable, false);
 		}
 	}
 	freeSymbolTableType(type);
@@ -287,7 +293,7 @@ int numOfChild(SyntaxTreeNode *node) {
 	return count;
 }
 
-bool handleArgs(SyntaxTreeNode* argsNode, FuncParam* param, SymbolTable symbolTable) {
+bool handleArgs(SyntaxTreeNode* argsNode, FuncParam* param, SymbolTable symbolTable, SymbolTable functionTable) {
 	if (argsNode == NULL && param == NULL) {
 		return true;
 	}
@@ -295,7 +301,7 @@ bool handleArgs(SyntaxTreeNode* argsNode, FuncParam* param, SymbolTable symbolTa
 		return false;
 	}
 	SymbolTableType* currParamType = param->paramType;
-	SymbolTableType* currArgType = handleExp(argsNode->firstChild, symbolTable);
+	SymbolTableType* currArgType = handleExp(argsNode->firstChild, symbolTable, functionTable);
 	if (currArgType == NULL) {
 		return false;
 	}
@@ -306,10 +312,10 @@ bool handleArgs(SyntaxTreeNode* argsNode, FuncParam* param, SymbolTable symbolTa
 	else {
 		freeSymbolTableType(currArgType);
 		if (argsNode->firstChild->nextSibling == NULL) {
-			return handleArgs(NULL, param->nextParam, symbolTable);
+			return handleArgs(NULL, param->nextParam, symbolTable, functionTable);
 		}
 		else {
-			return handleArgs(argsNode->firstChild->nextSibling->nextSibling, param->nextParam, symbolTable);
+			return handleArgs(argsNode->firstChild->nextSibling->nextSibling, param->nextParam, symbolTable, functionTable);
 		}
 	}
 }
@@ -326,7 +332,7 @@ bool isLeftValue(SyntaxTreeNode* expNode) {
 	}
 }
 
-SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
+SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable, SymbolTable functionTable) {
 	int childNum = numOfChild(expNode);
 	if (childNum == 1) {
 		SyntaxTreeNode* child = expNode->firstChild;
@@ -355,7 +361,7 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 	}
 	else if (childNum == 2) {
 		SyntaxTreeNode* firstChild = expNode->firstChild;
-		SymbolTableType* expType = handleExp(expNode->firstChild->nextSibling, symbolTable);
+		SymbolTableType* expType = handleExp(expNode->firstChild->nextSibling, symbolTable, functionTable);
 		if (firstChild->type == N_MINUS) {
 			if (expType == NULL || expType->typeType != S_BASIC) {
 				printf("Error type 7 at Line %d: Type mismatched for operands.\n", firstChild->nextSibling->lineno);
@@ -397,10 +403,10 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 			return copySymbolTableType(funcType->type.funcType.returnType);
 		}
 		else if (firstChild->type == N_LP) {
-			return handleExp(firstChild->nextSibling, symbolTable);
+			return handleExp(firstChild->nextSibling, symbolTable, functionTable);
 		}
 		else if (firstChild->nextSibling->type == N_DOT) { // Exp DOT ID
-			SymbolTableType *type = handleExp(firstChild, symbolTable);
+			SymbolTableType *type = handleExp(firstChild, symbolTable, functionTable);
 			if (type == NULL || type->typeType != S_STRUCT) {
 				SyntaxTreeNode* fieldNode = firstChild->nextSibling->nextSibling;
 				printf("Error type 13 at Line %d: Illegal use of '.'.\n", fieldNode->lineno);
@@ -428,8 +434,8 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 					printf("Error type 6 at Line %d: The left-hand side of an assignment must be a variable.\n", firstChild->lineno);
 					return NULL;
 				}
-				SymbolTableType* leftType = handleExp(firstChild, symbolTable);
-				SymbolTableType* rightType = handleExp(thirdChild, symbolTable);
+				SymbolTableType* leftType = handleExp(firstChild, symbolTable, functionTable);
+				SymbolTableType* rightType = handleExp(thirdChild, symbolTable, functionTable);
 				if (leftType == NULL || rightType == NULL) {
 					printf("Error type 5 at Line %d: Type mismatched for assignment.\n", secondChild->lineno);
 					if (leftType != NULL) freeSymbolTableType(leftType);
@@ -450,8 +456,8 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 				}
 			}
 			else if (secondChild->type == N_RELOP) {
-				SymbolTableType* leftType = handleExp(firstChild, symbolTable);
-				SymbolTableType* rightType = handleExp(thirdChild, symbolTable);
+				SymbolTableType* leftType = handleExp(firstChild, symbolTable, functionTable);
+				SymbolTableType* rightType = handleExp(thirdChild, symbolTable, functionTable);
 				if (leftType == NULL || leftType->typeType != S_BASIC ||
 						rightType == NULL || rightType->typeType != S_BASIC) {
 					printf("Error type 7 at Line %d: Type mismatched for operands.\n", secondChild->lineno);
@@ -467,8 +473,8 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 				return newType;
 			}
 			else { // PLUS MINUS STAR DIV
-				SymbolTableType* leftType = handleExp(firstChild, symbolTable);
-				SymbolTableType* rightType = handleExp(thirdChild, symbolTable);
+				SymbolTableType* leftType = handleExp(firstChild, symbolTable, functionTable);
+				SymbolTableType* rightType = handleExp(thirdChild, symbolTable, functionTable);
 				if (leftType == NULL || leftType->typeType != S_BASIC ||
 						rightType == NULL || rightType->typeType != S_BASIC ||
 						!compareSymbolTableType(leftType, rightType)) {
@@ -486,21 +492,23 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 		SyntaxTreeNode* firstChild = expNode->firstChild;
 		if (firstChild->type == N_ID) { // ID LP ARGS RP
 			TrieNode* idNode = firstChild->attr.id;
-			if (idNode->type == NULL) { // undefined function
+			char* funcName = retrieveStr(idNode);
+			SymbolTableType* type = querySymbol(functionTable, funcName);
+			free(funcName);
+			if (type == NULL) { // undefined function
 				char* idStr = retrieveStr(idNode);
 				printf("Error type 2 at Line %d: Undefined function \"%s\".\n", firstChild->lineno, idStr);
 				free(idStr);
 				return NULL;
 			}
-			else if (((SymbolTableType*)(idNode->type))->typeType != S_FUNCTION) {
+			else if (type->typeType != S_FUNCTION) {
 				char* idName = retrieveStr(idNode);
 				printf("Error type 11 at Line %d: \"%s\" is not a function.\n", firstChild->lineno, idName);
 				free(idName);
 				return NULL;
 			}
-			SymbolTableType* funcType = idNode->type;
-			if (handleArgs(firstChild->nextSibling->nextSibling, funcType->type.funcType.firstParam, symbolTable)) {
-				return copySymbolTableType(funcType->type.funcType.returnType);
+			if (handleArgs(firstChild->nextSibling->nextSibling, type->type.funcType.firstParam, symbolTable, functionTable)) {
+				return copySymbolTableType(type->type.funcType.returnType);
 			}
 			else {
 				printf("Error type 9 at Line %d: Function paramaters mismatch.\n", firstChild->nextSibling->nextSibling->lineno);
@@ -508,13 +516,13 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 			}
 		}
 		else { // Exp LB Exp RB
-			SymbolTableType* expType = handleExp(firstChild, symbolTable);
+			SymbolTableType* expType = handleExp(firstChild, symbolTable, functionTable);
 			if (expType == NULL || expType->typeType != S_ARRAY) {
 				printf("Error type 10 at Line %d: Illegal use of \"[]\".\n", firstChild->lineno);
 				if (expType != NULL) freeSymbolTableType(expType);
 				return NULL;
 			}
-			SymbolTableType* indexType = handleExp(firstChild->nextSibling->nextSibling, symbolTable);
+			SymbolTableType* indexType = handleExp(firstChild->nextSibling->nextSibling, symbolTable, functionTable);
 			if (indexType == NULL) {
 				freeSymbolTableType(expType);
 				return NULL;
@@ -532,54 +540,54 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable) {
 	return NULL;
 }
 
-void handleStmt(SyntaxTreeNode* stmtNode, SymbolTable symbolTable) {
+void handleStmt(SyntaxTreeNode* stmtNode, SymbolTable symbolTable, SymbolTable functionTable) {
 	if (stmtNode->firstChild->type == N_EXP) {
-		SymbolTableType* type = handleExp(stmtNode->firstChild, symbolTable);
+		SymbolTableType* type = handleExp(stmtNode->firstChild, symbolTable, functionTable);
 		if (type != NULL) freeSymbolTableType(type);
 	}
 	else if (stmtNode->firstChild->type == N_COMPST) {
-		semanticAnalysis(stmtNode->firstChild, symbolTable);
+		semanticAnalysis(stmtNode->firstChild, symbolTable, NULL);
 	}
 	else if (stmtNode->firstChild->type == N_RETURN) {
-		SymbolTableType* returnType = handleExp(stmtNode->firstChild->nextSibling, symbolTable);
+		SymbolTableType* returnType = handleExp(stmtNode->firstChild->nextSibling, symbolTable, functionTable);
 		if (!compareSymbolTableType(returnType, gCurrReturnType)) {
 			printf("Error type 8 at Line %d: Type mismatched for return.\n", stmtNode->firstChild->nextSibling->lineno);
 		}
 		if (returnType != NULL) freeSymbolTableType(returnType);
 	}
 	else if (stmtNode->firstChild->type == N_IF) {
-		SymbolTableType* expType = handleExp(stmtNode->firstChild->nextSibling->nextSibling, symbolTable);
+		SymbolTableType* expType = handleExp(stmtNode->firstChild->nextSibling->nextSibling, symbolTable, functionTable);
 		if (expType != NULL) freeSymbolTableType(expType);
 		SyntaxTreeNode* firstStmt = stmtNode->firstChild->nextSibling->nextSibling->nextSibling->nextSibling;
-		handleStmt(firstStmt, symbolTable);
+		handleStmt(firstStmt, symbolTable, functionTable);
 		if (firstStmt->nextSibling != NULL) {
-			handleStmt(firstStmt->nextSibling->nextSibling, symbolTable);
+			handleStmt(firstStmt->nextSibling->nextSibling, symbolTable, functionTable);
 		}
 	}
 	else { // WHILE LOOP
-		SymbolTableType* expType = handleExp(stmtNode->firstChild->nextSibling->nextSibling, symbolTable);
+		SymbolTableType* expType = handleExp(stmtNode->firstChild->nextSibling->nextSibling, symbolTable, functionTable);
 		if (expType != NULL) freeSymbolTableType(expType);
-		handleStmt(stmtNode->firstChild->nextSibling->nextSibling->nextSibling->nextSibling, symbolTable);
+		handleStmt(stmtNode->firstChild->nextSibling->nextSibling->nextSibling->nextSibling, symbolTable, functionTable);
 	}
 }
 
-void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, SymbolTable symbolTable) {
+void semanticAnalysis(SyntaxTreeNode* syntaxTreeNode, SymbolTable symbolTable, SymbolTable functionTable) {
 	if (syntaxTreeNode->type == N_EXTDEF) { // external definition
-		handleExtDef(syntaxTreeNode, symbolTable);
+		handleExtDef(syntaxTreeNode, symbolTable, functionTable);
 		return;
 	}
 	else if (syntaxTreeNode->type == N_DEF) { // local definition
-		handleDef(syntaxTreeNode, symbolTable, false, NULL);
+		handleDef(syntaxTreeNode, symbolTable, functionTable, false, NULL);
 		return;
 	}
 	else if (syntaxTreeNode->type == N_STMT) {
-		handleStmt(syntaxTreeNode, symbolTable);
+		handleStmt(syntaxTreeNode, symbolTable, functionTable);
 		return;
 	}
 
 	SyntaxTreeNode* child = syntaxTreeNode->firstChild;
 	while (child != NULL) {
-		semanticAnalysis(child, symbolTable);
+		semanticAnalysis(child, symbolTable, functionTable);
 		child = child->nextSibling;
 	}
 }

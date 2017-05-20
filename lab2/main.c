@@ -11,6 +11,7 @@ extern int yydebug;
 bool gError = false;
 
 SymbolTable gSymbolTable = NULL;
+SymbolTable gFunctionTable = NULL;
 SyntaxTreeNode* gTree = NULL;
 
 void yyrestart(FILE*);
@@ -24,12 +25,15 @@ int main(int argc, char* argv[]) {
 		return 1;	
 	}
 	gSymbolTable = initSymbolTable();
+	gFunctionTable = initSymbolTable();
 	yyrestart(f);
 	yyparse();
 	if (!gError) {
-		semanticAnalysis(gTree, gSymbolTable);
-		checkUndefinedFunc(gSymbolTable);
+		semanticAnalysis(gTree, gSymbolTable, gFunctionTable);
+		checkUndefinedFunc(gFunctionTable);
 		//printSymbolTable(gSymbolTable);
+		//printf("-----\n");
+		//printSymbolTable(gFunctionTable);
 	}
 	freeTree(gTree);
 	freeSymbolTable(gSymbolTable);
