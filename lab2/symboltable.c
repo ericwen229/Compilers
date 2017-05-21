@@ -8,6 +8,46 @@ SymbolTable initSymbolTable() {
 	return initTrieNode(NULL, -1);
 }
 
+SymbolTableType* initIntType() {
+	SymbolTableType* intType = initSymbolTableType();
+	intType->typeType = S_BASIC;
+	intType->type.basicType = T_INT;
+	return intType;
+}
+
+SymbolTableType* initReadType() {
+	SymbolTableType* readType = initSymbolTableType();
+	readType->typeType = S_FUNCTION;
+	readType->type.funcType.isDefined = true;
+	readType->type.funcType.lineno = -1;
+	readType->type.funcType.returnType = initIntType();
+	readType->type.funcType.firstParam = NULL;
+	return readType;
+}
+
+FuncParam* initParam(SymbolTableType* type, FuncParam* next) {
+	FuncParam* param = (FuncParam*)malloc(sizeof(FuncParam));
+	param->paramType = type;
+	param->nextParam = next;
+}
+
+SymbolTableType* initWriteType() {
+	SymbolTableType* writeType = initSymbolTableType();
+	writeType->typeType = S_FUNCTION;
+	writeType->type.funcType.isDefined = true;
+	writeType->type.funcType.lineno = -1;
+	writeType->type.funcType.returnType = initIntType();
+	writeType->type.funcType.firstParam = initParam(initIntType(), NULL);
+	return writeType;
+}
+
+SymbolTable initFunctionTable() {
+	SymbolTable functionTable = initSymbolTable();
+	insertSymbol(functionTable, "read", initReadType());
+	insertSymbol(functionTable, "write", initWriteType());
+	return functionTable;
+}
+
 TrieNode* insertSymbol(SymbolTable table, char* symbol, SymbolTableType* type) {
 	return insertTrie(table, symbol, type);
 }

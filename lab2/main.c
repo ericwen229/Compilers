@@ -25,14 +25,18 @@ int main(int argc, char* argv[]) {
 		return 1;	
 	}
 	gSymbolTable = initSymbolTable();
-	gFunctionTable = initSymbolTable();
+	gFunctionTable = initFunctionTable();
 	yyrestart(f);
 	yyparse();
-	if (!gError) {
-		semanticAnalysis(gTree, gSymbolTable, gFunctionTable);
-		checkUndefinedFunc(gFunctionTable);
-		//printSymbolTable(gSymbolTable);
-		//printSymbolTable(gFunctionTable);
+	if (gError) {
+		return 0;
+	}
+	semanticAnalysis(gTree, gSymbolTable, gFunctionTable);
+	checkUndefinedFunc(gFunctionTable);
+	//printSymbolTable(gSymbolTable);
+	printSymbolTable(gFunctionTable);
+	if (gError) {
+		return 0;
 	}
 	freeTree(gTree);
 	freeSymbolTable(gSymbolTable);

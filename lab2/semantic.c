@@ -4,6 +4,8 @@
 
 #include "semantic.h"
 
+extern bool gError;
+
 static SymbolTableType* gCurrReturnType;
 
 SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable, SymbolTable functionTable);
@@ -27,6 +29,7 @@ SymbolTableType* handleStructSpecifier(SyntaxTreeNode* structSpecifierNode, Symb
 		char* structName = retrieveStr(tagNode->firstChild->attr.id);
 		SymbolTableType* structDef = querySymbol(symbolTable, structName);
 		if (structDef == NULL || structDef->typeType != S_STRUCTDEF) {
+			gError = true;
 			printf("Error type 17 at Line %d: Undefined structure \"%s\".\n", tagNode->lineno, structName);
 		}
 		SymbolTableType* newType = initSymbolTableType();
@@ -54,6 +57,7 @@ SymbolTableType* handleStructSpecifier(SyntaxTreeNode* structSpecifierNode, Symb
 		}
 
 		if (querySymbol(symbolTable, structName) != NULL) {
+			gError = true;
 			printf("Error type 16 at Line %d: Duplicated name \"%s\".\n", tagNode->lineno, structName);
 		}
 		else {
@@ -93,9 +97,11 @@ void handleVarDec(SymbolTableType* type, SyntaxTreeNode* varDecNode, bool isStru
 		if (child->attr.id->type != NULL) {
 			char* idName = retrieveStr(child->attr.id);
 			if (!isStruct) {
+				gError = true;
 				printf("Error type 3 at Line %d: Redefinition of identifier \"%s\".\n", child->lineno, idName);
 			}
 			else {
+				gError = true;
 				printf("Error type 15 at Line %d: Redefinition of field \"%s\".\n", child->lineno, idName);
 			}
 			free(idName);
@@ -128,12 +134,14 @@ void handleDec(SymbolTableType* type, SyntaxTreeNode* decNode, SymbolTable symbo
 	handleVarDec(type, varDecNode, isStruct, currField, false, NULL, false);
 	if (varDecNode->nextSibling != NULL) {
 		if (isStruct) {
+			gError = true;
 			printf("Error type 15 at Line %d: Trying to initialize struct field.\n", varDecNode->nextSibling->nextSibling->lineno);
 			return;
 		}
 		SyntaxTreeNode* expNode = varDecNode->nextSibling->nextSibling;
 		SymbolTableType* expType = handleExp(expNode, symbolTable, functionTable);
 		if (!compareSymbolTableType(type, expType)) {
+			gError = true;
 			printf("Error type 5 at Line %d: Type mismatched for assignment.\n", expNode->lineno);
 		}
 		if (expType != NULL) {
@@ -218,6 +226,7 @@ void handleFunDec(SymbolTableType* returnType, SyntaxTreeNode* funDecNode, Symbo
 	}
 	else if (((SymbolTableType*)(funDecNode->firstChild->attr.id->type))->typeType != S_FUNCTION) {
 		char* funcName = retrieveStr(funDecNode->firstChild->attr.id);
+		gError = true;
 		printf("Error type 3 at Line %d: Redefinition of identifier \"%s\".\n", funDecNode->firstChild->lineno, funcName);
 		free(funcName);
 		freeSymbolTableType(funcType);
@@ -225,6 +234,7 @@ void handleFunDec(SymbolTableType* returnType, SyntaxTreeNode* funDecNode, Symbo
 	else if (((SymbolTableType*)(funDecNode->firstChild->attr.id->type))->type.funcType.isDefined) { // has been defined
 		if (isDefinition) {
 			char* funcName = retrieveStr(funDecNode->firstChild->attr.id);
+			gError = true;
 			printf("Error type 4 at Line %d: Redefinition of function \"%s\".\n", funDecNode->lineno, funcName);
 			free(funcName);
 		}
@@ -232,6 +242,7 @@ void handleFunDec(SymbolTableType* returnType, SyntaxTreeNode* funDecNode, Symbo
 			SymbolTableType* defineType = funDecNode->firstChild->attr.id->type;
 			if (!compareSymbolTableType(defineType, funcType)) {
 				char* funcName = retrieveStr(funDecNode->firstChild->attr.id);
+				gError = true;
 				printf("Error type 19 at Line %d: Function \"%s\" declaration mismatch function definition.\n", funDecNode->lineno, funcName);
 				free(funcName);
 			}
@@ -247,6 +258,7 @@ void handleFunDec(SymbolTableType* returnType, SyntaxTreeNode* funDecNode, Symbo
 			}
 			else {
 				char* funcName = retrieveStr(funDecNode->firstChild->attr.id);
+				gError = true;
 				printf("Error type 19 at Line %d: Function \"%s\" definition mismatch function declaration.\n", funDecNode->lineno, funcName);
 				free(funcName);
 			}
@@ -254,6 +266,7 @@ void handleFunDec(SymbolTableType* returnType, SyntaxTreeNode* funDecNode, Symbo
 		else {
 			if (!same) {
 				char* funcName = retrieveStr(funDecNode->firstChild->attr.id);
+				gError = true;
 				printf("Error type 19 at Line %d: Function \"%s\" declaration mismatch function declaration.\n", funDecNode->lineno, funcName);
 				free(funcName);
 			}
@@ -340,6 +353,7 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable, Sym
 			TrieNode* idNode = child->attr.id;
 			if (idNode->type == NULL) { // undefined identifier
 				char* idStr = retrieveStr(idNode);
+				gError = true;
 				printf("Error type 1 at Line %d: Undefined identifier \"%s\".\n", child->lineno, idStr);
 				free(idStr);
 				return NULL;
@@ -364,6 +378,7 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable, Sym
 		SymbolTableType* expType = handleExp(expNode->firstChild->nextSibling, symbolTable, functionTable);
 		if (firstChild->type == N_MINUS) {
 			if (expType == NULL || expType->typeType != S_BASIC) {
+				gError = true;
 				printf("Error type 7 at Line %d: Type mismatched for operands.\n", firstChild->nextSibling->lineno);
 				if (expType != NULL) freeSymbolTableType(expType);
 				return NULL;
@@ -374,6 +389,7 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable, Sym
 		}
 		else { // N_NOT
 			if (expType == NULL || expType->typeType != S_BASIC || expType->type.basicType != N_INT) {
+				gError = true;
 				printf("Error type 7 at Line %d: Type mismatched for operands.\n", firstChild->nextSibling->lineno);
 				if (expType != NULL) freeSymbolTableType(expType);
 				return NULL;
@@ -389,12 +405,14 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable, Sym
 			TrieNode* funcNode = firstChild->attr.id;
 			if (funcNode->type == NULL) { // undefined function
 				char* funcName = retrieveStr(funcNode);
+				gError = true;
 				printf("Error type 2 at Line %d: Undefined function \"%s\".\n", firstChild->lineno, funcName);
 				free(funcName);
 				return NULL;
 			}
 			else if (((SymbolTableType*)(funcNode->type))->typeType != S_FUNCTION) {
 				char* idName = retrieveStr(funcNode);
+				gError = true;
 				printf("Error type 11 at Line %d: \"%s\" is not a function.\n", firstChild->lineno, idName);
 				free(idName);
 				return NULL;
@@ -409,6 +427,7 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable, Sym
 			SymbolTableType *type = handleExp(firstChild, symbolTable, functionTable);
 			if (type == NULL || type->typeType != S_STRUCT) {
 				SyntaxTreeNode* fieldNode = firstChild->nextSibling->nextSibling;
+				gError = true;
 				printf("Error type 13 at Line %d: Illegal use of '.'.\n", fieldNode->lineno);
 				if (type != NULL) freeSymbolTableType(type);
 				return NULL;
@@ -419,6 +438,7 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable, Sym
 				SymbolTableType* structDef = querySymbol(symbolTable, type->type.structName);
 				SymbolTableType* fieldType = queryField(structDef->type.structType.firstField, fieldName);
 				if (fieldType == NULL) {
+					gError = true;
 					printf("Error type 14 at Line %d: Undefined field \"%s\".\n", fieldNode->lineno, fieldName);
 				}
 				free(fieldName);
@@ -431,12 +451,14 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable, Sym
 			SyntaxTreeNode* thirdChild = secondChild->nextSibling;
 			if (secondChild->type == N_ASSIGNOP) {
 				if (!isLeftValue(firstChild)) {
+					gError = true;
 					printf("Error type 6 at Line %d: The left-hand side of an assignment must be a variable.\n", firstChild->lineno);
 					return NULL;
 				}
 				SymbolTableType* leftType = handleExp(firstChild, symbolTable, functionTable);
 				SymbolTableType* rightType = handleExp(thirdChild, symbolTable, functionTable);
 				if (leftType == NULL || rightType == NULL) {
+					gError = true;
 					printf("Error type 5 at Line %d: Type mismatched for assignment.\n", secondChild->lineno);
 					if (leftType != NULL) freeSymbolTableType(leftType);
 					if (rightType != NULL) freeSymbolTableType(rightType);
@@ -445,6 +467,7 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable, Sym
 				SymbolTableType* leftRealType = (leftType->typeType == S_STRUCT)? querySymbol(symbolTable, leftType->type.structName): leftType;
 				SymbolTableType* rightRealType = (rightType->typeType == S_STRUCT)? querySymbol(symbolTable, rightType->type.structName): rightType;
 				if (!compareSymbolTableType(leftRealType, rightRealType)) {
+					gError = true;
 					printf("Error type 5 at Line %d: Type mismatched for assignment.\n", secondChild->lineno);
 					freeSymbolTableType(leftType);
 					freeSymbolTableType(rightType);
@@ -460,6 +483,7 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable, Sym
 				SymbolTableType* rightType = handleExp(thirdChild, symbolTable, functionTable);
 				if (leftType == NULL || leftType->typeType != S_BASIC ||
 						rightType == NULL || rightType->typeType != S_BASIC) {
+					gError = true;
 					printf("Error type 7 at Line %d: Type mismatched for operands.\n", secondChild->lineno);
 					if (leftType != NULL) freeSymbolTableType(leftType);
 					if (rightType != NULL) freeSymbolTableType(rightType);
@@ -478,6 +502,7 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable, Sym
 				if (leftType == NULL || leftType->typeType != S_BASIC ||
 						rightType == NULL || rightType->typeType != S_BASIC ||
 						!compareSymbolTableType(leftType, rightType)) {
+					gError = true;
 					printf("Error type 7 at Line %d: Type mismatched for operands.\n", secondChild->lineno);
 					if (leftType != NULL) freeSymbolTableType(leftType);
 					if (rightType != NULL) freeSymbolTableType(rightType);
@@ -497,12 +522,14 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable, Sym
 			free(funcName);
 			if (type == NULL) { // undefined function
 				char* idStr = retrieveStr(idNode);
+				gError = true;
 				printf("Error type 2 at Line %d: Undefined function \"%s\".\n", firstChild->lineno, idStr);
 				free(idStr);
 				return NULL;
 			}
 			else if (type->typeType != S_FUNCTION) {
 				char* idName = retrieveStr(idNode);
+				gError = true;
 				printf("Error type 11 at Line %d: \"%s\" is not a function.\n", firstChild->lineno, idName);
 				free(idName);
 				return NULL;
@@ -511,6 +538,7 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable, Sym
 				return copySymbolTableType(type->type.funcType.returnType);
 			}
 			else {
+				gError = true;
 				printf("Error type 9 at Line %d: Function paramaters mismatch.\n", firstChild->nextSibling->nextSibling->lineno);
 				return NULL;
 			}
@@ -518,6 +546,7 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable, Sym
 		else { // Exp LB Exp RB
 			SymbolTableType* expType = handleExp(firstChild, symbolTable, functionTable);
 			if (expType == NULL || expType->typeType != S_ARRAY) {
+				gError = true;
 				printf("Error type 10 at Line %d: Illegal use of \"[]\".\n", firstChild->lineno);
 				if (expType != NULL) freeSymbolTableType(expType);
 				return NULL;
@@ -528,6 +557,7 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable, Sym
 				return NULL;
 			}
 			else if (indexType->typeType != S_BASIC || indexType->type.basicType != T_INT) {
+				gError = true;
 				printf("Error type 12 at Line %d: Index is not integer.\n", firstChild->nextSibling->nextSibling->lineno);
 				freeSymbolTableType(expType);
 				freeSymbolTableType(indexType);
@@ -551,6 +581,7 @@ void handleStmt(SyntaxTreeNode* stmtNode, SymbolTable symbolTable, SymbolTable f
 	else if (stmtNode->firstChild->type == N_RETURN) {
 		SymbolTableType* returnType = handleExp(stmtNode->firstChild->nextSibling, symbolTable, functionTable);
 		if (!compareSymbolTableType(returnType, gCurrReturnType)) {
+			gError = true;
 			printf("Error type 8 at Line %d: Type mismatched for return.\n", stmtNode->firstChild->nextSibling->lineno);
 		}
 		if (returnType != NULL) freeSymbolTableType(returnType);
