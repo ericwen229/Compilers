@@ -23,5 +23,7 @@ typedef struct IRTreeNode {
 	struct IRTreeNode* nextSibling;
 } IRTreeNode;
 
+IRTreeNode* initIRTree();
+
 #endif
 
