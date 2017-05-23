@@ -220,3 +220,213 @@ IRCode* concat(IRCode* code1, IRCode* code2) {
 	return code1;
 }
 
+// ==========
+
+IRCode* generateSampleCode() {
+	IRCode* finalCode = NULL;
+	// FUNCTION main :
+	finalCode = concat(finalCode, createFunction("main"));
+	// READ t1
+	finalCode = concat(finalCode, createRead(createTempOperand(1)));
+	// v1 := t1
+	finalCode = concat(finalCode, createAssign(createTempOperand(1), createVarOperand(1)));
+	// t2 := #0
+	finalCode = concat(finalCode, createAssign(createConstOperand(0), createTempOperand(2)));
+	// IF v1 > t2 GOTO label1
+	finalCode = concat(finalCode, createCond(createVarOperand(1), createTempOperand(2), IR_GT, createLabelOperand(1)));
+	// IF v1 < t2 GOTO label2
+	finalCode = concat(finalCode, createCond(createVarOperand(1), createTempOperand(2), IR_LT, createLabelOperand(1)));
+	// WRITE t2
+	finalCode = concat(finalCode, createWrite(createTempOperand(2)));
+	// GOTO label3
+	finalCode = concat(finalCode, createGoto(3));
+	// LABEL label1 :
+	finalCode = concat(finalCode, createLabel(1));
+	// t3 := #1
+	finalCode = concat(finalCode, createAssign(createConstOperand(1), createTempOperand(3)));
+	// WRITE t3
+	finalCode = concat(finalCode, createWrite(createTempOperand(3)));
+	// GOTO label3
+	finalCode = concat(finalCode, createGoto(3));
+	// LABEL label2 :
+	finalCode = concat(finalCode, createLabel(2));
+	// t6 := #-1
+	finalCode = concat(finalCode, createAssign(createConstOperand(-1), createTempOperand(6)));
+	// WRITE t6
+	finalCode = concat(finalCode, createWrite(createTempOperand(6)));
+	// LABEL label3 :
+	finalCode = concat(finalCode, createLabel(3));
+	// RETURN t2
+	finalCode = concat(finalCode, createReturn(createTempOperand(2)));
+	return finalCode;
+}
+
+void printOperand(IROperand* op, FILE* out) {
+	if (op == NULL) return;
+	switch (op->type) {
+	case IRO_CONST:
+		fprintf(out, "#%d", op->constValue);
+		break;
+	case IRO_VAR:
+		fprintf(out, "v%d", op->varId);
+		break;
+	case IRO_TEMP:
+		fprintf(out, "t%d", op->tempId);
+		break;
+	case IRO_GETADDR:
+		if (op->isTemp) fprintf(out, "&t%d", op->tempId);
+		else fprintf(out, "&v%d", op->varId);
+		break;
+	case IRO_SETADDR:
+		if (op->isTemp) fprintf(out, "*t%d", op->tempId);
+		else fprintf(out, "*v%d", op->varId);
+		break;
+	case IRO_FUNC:
+		fprintf(out, "%s", op->funcName);
+		break;
+	case IRO_LABEL:
+		fprintf(out, "label%d", op->labelId);
+		break;
+	default:
+		fprintf(out, "[unknown operand]");
+		break;
+	}
+}
+
+void _printIRCode(IRCode* code, FILE* out) {
+	if (code == NULL) return;
+	switch (code->type) {
+	case IR_LABEL:
+		fprintf(out, "LABEL ");
+		printOperand(code->singleOp.op, out);
+		fprintf(out, " :\n");
+		break;
+	case IR_FUNC:
+		fprintf(out, "FUNCTION ");
+		printOperand(code->singleOp.op, out);
+		fprintf(out, " :\n");
+		break;
+	case IR_ASSIGN:
+		printOperand(code->singleOp.dest, out);
+		fprintf(out, " := ");
+		printOperand(code->singleOp.op, out);
+		fprintf(out, "\n");
+		break;
+	case IR_ADD:
+		printOperand(code->binOp.dest, out);
+		fprintf(out, " := ");
+		printOperand(code->binOp.left, out);
+		fprintf(out, " + ");
+		printOperand(code->binOp.right, out);
+		fprintf(out, "\n");
+		break;
+	case IR_MINUS:
+		printOperand(code->binOp.dest, out);
+		fprintf(out, " := ");
+		printOperand(code->binOp.left, out);
+		fprintf(out, " - ");
+		printOperand(code->binOp.right, out);
+		fprintf(out, "\n");
+		break;
+	case IR_STAR:
+		printOperand(code->binOp.dest, out);
+		fprintf(out, " := ");
+		printOperand(code->binOp.left, out);
+		fprintf(out, " * ");
+		printOperand(code->binOp.right, out);
+		fprintf(out, "\n");
+		break;
+	case IR_DIV:
+		printOperand(code->binOp.dest, out);
+		fprintf(out, " := ");
+		printOperand(code->binOp.left, out);
+		fprintf(out, " / ");
+		printOperand(code->binOp.right, out);
+		fprintf(out, "\n");
+		break;
+	case IR_GOTO:
+		fprintf(out, "GOTO ");
+		printOperand(code->singleOp.op, out);
+		fprintf(out, "\n");
+		break;
+	case IR_COND:
+		fprintf(out, "IF ");
+		printOperand(code->condOp.left, out);
+		switch (code->condOp.relOp) {
+		case IR_LT:
+			fprintf(out, " < ");
+			break;
+		case IR_LE:
+			fprintf(out, " <= ");
+			break;
+		case IR_EQ:
+			fprintf(out, " == ");
+			break;
+		case IR_GE:
+			fprintf(out, " >= ");
+			break;
+		case IR_GT:
+			fprintf(out, " > ");
+			break;
+		default:
+			fprintf(out, " [unknown relop] ");
+			break;
+		}
+		printOperand(code->condOp.right, out);
+		fprintf(out, " GOTO ");
+		printOperand(code->condOp.dest, out);
+		fprintf(out, "\n");
+		break;
+	case IR_RETURN:
+		fprintf(out, "RETURN ");
+		printOperand(code->singleOp.op, out);
+		fprintf(out, "\n");
+		break;
+	case IR_DEC:
+		fprintf(out, "DEC ");
+		printOperand(code->decOp.op, out);
+		fprintf(out, " %d\n", code->decOp.size);
+		break;
+	case IR_ARG:
+		fprintf(out, "ARG ");
+		printOperand(code->singleOp.op, out);
+		fprintf(out, "\n");
+		break;
+	case IR_CALL:
+		printOperand(code->singleOp.dest, out);
+		fprintf(out, " := CALL ");
+		printOperand(code->singleOp.op, out);
+		fprintf(out, "\n");
+		break;
+	case IR_PARAM:
+		fprintf(out, "PARAM ");
+		printOperand(code->singleOp.op, out);
+		fprintf(out, "\n");
+		break;
+	case IR_READ:
+		fprintf(out, "READ ");
+		printOperand(code->singleOp.dest, out);
+		fprintf(out, "\n");
+		break;
+	case IR_WRITE:
+		fprintf(out, "WRITE ");
+		printOperand(code->singleOp.op, out);
+		fprintf(out, "\n");
+		break;
+	default:
+		fprintf(out, "[unknown code]\n");
+		break;
+	}
+}
+
+void printIRCode(IRCode* code, FILE* out) {
+	if (code == NULL) return;
+	IRCode* head = code;
+	_printIRCode(head, out);
+	code = code->next;
+	while (code != head) {
+		_printIRCode(code, out);
+		code = code->next;
+	}
+}
+

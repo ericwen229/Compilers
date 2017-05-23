@@ -1,6 +1,8 @@
 #ifndef __IR_H__
 #define __IR_H__
 
+#include <stdio.h>
+
 #include "def.h"
 #include "trie.h"
 
@@ -82,6 +84,9 @@ IRCode* createRead(IROperand* dest);
 IRCode* createWrite(IROperand* op);
 
 IRCode* concat(IRCode* code1, IRCode* code2);
+
+IRCode* generateSampleCode();
+void printIRCode(IRCode* code, FILE* out);
 
 #endif
 
