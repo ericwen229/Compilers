@@ -3,6 +3,8 @@
 
 #include "ir.h"
 
+extern bool gError;
+
 IROperand* createOperand() {
 	IROperand* newOperand = (IROperand*)malloc(sizeof(IROperand));
 	newOperand->funcName = NULL;
@@ -61,6 +63,12 @@ IROperand* createLabelOperand(int labelId) {
 	labelOperand->type = IRO_LABEL;
 	labelOperand->labelId = labelId;
 	return labelOperand;
+}
+
+IROperand* copyOperand(IROperand* operand) {
+	IROperand* newOperand = createOperand();
+	(*newOperand) = (*operand);
+	return newOperand;
 }
 
 // ==========
@@ -264,9 +272,64 @@ IRCode* generateSampleCode() {
 
 // ==========
 
+IRCode* translateCond(SyntaxTreeNode* exp, int trueLabel, int falseLabel, SymbolTable symbolTable, SymbolTable functionTable);
+
 IRCode* translateExp(SyntaxTreeNode* exp, IROperand* place, SymbolTable symbolTable, SymbolTable functionTable) {
-	// TODO
-	return NULL;
+	int childNum = numOfChild(exp);
+	if (childNum == 1) {
+		if (exp->firstChild->type == N_INT) {
+			// INT
+			if (place == NULL) return NULL;
+			else return createAssign(createConstOperand(exp->firstChild->attr.intValue), place);
+		}
+		else if (exp->firstChild->type == N_ID) {
+			// ID
+			TrieNode* varNode = exp->firstChild->attr.id;
+			int varId = ((SymbolTableType*)varNode->type)->id;
+			if (place == NULL) return NULL;
+			else return createAssign(createVarOperand(varId, varNode), place);
+		}
+		else {
+			// FLOAT
+			printf("CANNOT TRANSLATE FLOATING NUMBERS!\n");
+			gError = true;
+			return NULL;
+		}
+	}
+	else if (childNum == 2) {
+		if (exp->firstChild->type == N_MINUS) {
+			// MINUS Exp
+			if (place == NULL) return translateExp(exp->firstChild->nextSibling, NULL, symbolTable, functionTable);
+			else {
+				int tempId = generateTempId();
+				return concat(translateExp(exp->firstChild->nextSibling, createTempOperand(tempId), symbolTable, functionTable),
+						createMinus(createConstOperand(0), createTempOperand(tempId), place));
+			}
+		}
+		else {
+			// NOT Exp
+			if (place == NULL) return translateExp(exp->firstChild->nextSibling, NULL, symbolTable, functionTable);
+			else {
+				int label1 = generateLabelId();
+				int label2 = generateLabelId();
+				IRCode* finalCode = NULL;
+				finalCode = concat(finalCode, createAssign(createConstOperand(0), place));
+				finalCode = concat(finalCode, translateCond(exp->firstChild->nextSibling, label1, label2, symbolTable, functionTable));
+				finalCode = concat(finalCode, createLabel(label1));
+				finalCode = concat(finalCode, createAssign(createConstOperand(1), copyOperand(place)));
+				finalCode = concat(finalCode, createLabel(label2));
+				return finalCode;
+			}
+		}
+	}
+	else if (childNum == 3) {
+		// TODO
+		return NULL;
+	}
+	else { // childNum == 4
+		// TODO
+		return NULL;
+	}
 }
 	
 IRCode* translateCond(SyntaxTreeNode* exp, int trueLabel, int falseLabel, SymbolTable symbolTable, SymbolTable functionTable) {
@@ -279,6 +342,7 @@ IRCode* translateCompSt(SyntaxTreeNode* compSt, SymbolTable symbolTable, SymbolT
 IRCode* translateStmt(SyntaxTreeNode* stmt, SymbolTable symbolTable, SymbolTable functionTable) {
 	if (stmt->type != N_STMT) {
 		printf("STMT MISMATCH!\n");
+		gError = true;
 		return NULL;
 	}
 	SyntaxTreeNode* firstChild = stmt->firstChild;
@@ -348,11 +412,12 @@ IRCode* translateStmt(SyntaxTreeNode* stmt, SymbolTable symbolTable, SymbolTable
 }
 
 IRCode* translateDefList(SyntaxTreeNode* defList, SymbolTable symbolTable, SymbolTable functionTable) {
-	// TODO
 	if (defList->type != N_DEFLIST) {
 		printf("DEFLIST MISMATCH!\n");
+		gError = true;
 		return NULL;
 	}
+	// TODO
 	return NULL;
 }
 
@@ -372,6 +437,7 @@ IRCode* translateStmtList(SyntaxTreeNode* stmtList, SymbolTable symbolTable, Sym
 IRCode* translateCompSt(SyntaxTreeNode* compSt, SymbolTable symbolTable, SymbolTable functionTable) {
 	if (compSt->type != N_COMPST) {
 		printf("COMPST MISMATCH!\n");
+		gError = true;
 		return NULL;
 	}
 	return concat(translateDefList(compSt->firstChild->nextSibling, symbolTable, functionTable),
@@ -381,16 +447,32 @@ IRCode* translateCompSt(SyntaxTreeNode* compSt, SymbolTable symbolTable, SymbolT
 IRCode* translateExtDef(SyntaxTreeNode* extDef, SymbolTable symbolTable, SymbolTable functionTable) {
 	if (extDef->type != N_EXTDEF) {
 		printf("EXTDEF MISMATCH!\n");
+		gError = true;
 		return NULL;
 	}
-	// Specifier FunDec Compst
-	char* funcName = retrieveStr(extDef->firstChild->nextSibling->firstChild->attr.id);
-	return concat(createFunction(funcName), translateCompSt(extDef->firstChild->nextSibling->nextSibling, symbolTable, functionTable));
+	if (extDef->firstChild->nextSibling->type == N_FUNDEC) {
+		// Specifier FunDec Compst
+		char* funcName = retrieveStr(extDef->firstChild->nextSibling->firstChild->attr.id);
+		return concat(createFunction(funcName), translateCompSt(extDef->firstChild->nextSibling->nextSibling, symbolTable, functionTable));
+	}
+	else if (extDef->firstChild->nextSibling->type == N_SEMI) {
+		// Specifier SEMI
+		printf("CANNOT TRANSLATE TYPE DECLARATIONS!\n");
+		gError = true;
+		return NULL;
+	}
+	else {
+		// Specifier ExtDecList SEMI
+		printf("CANNOT TRANSLATE GLOBAL VARIABLES!");
+		gError = true;
+		return NULL;
+	}
 }
 
 IRCode* translateExtDefList(SyntaxTreeNode* extDefList, SymbolTable symbolTable, SymbolTable functionTable) {
 	if (extDefList->type != N_EXTDEFLIST) {
 		printf("EXTDEFLIST MISMATCH!\n");
+		gError = true;
 		return NULL;
 	}
 	if (extDefList->firstChild == NULL) {
@@ -405,6 +487,7 @@ IRCode* translateExtDefList(SyntaxTreeNode* extDefList, SymbolTable symbolTable,
 IRCode* translateProgram(SyntaxTreeNode* program, SymbolTable symbolTable, SymbolTable functionTable) {
 	if (program->type != N_PROGRAM) {
 		printf("PROGRAM MISMATCH!\n");
+		gError = true;
 		return NULL;
 	}
 	return translateExtDefList(program->firstChild, symbolTable, functionTable);
@@ -452,6 +535,7 @@ void printOperand(IROperand* op, FILE* out) {
 		break;
 	default:
 		fprintf(out, "[unknown operand]");
+		gError = true;
 		break;
 	}
 }
@@ -533,6 +617,7 @@ void _printIRCode(IRCode* code, FILE* out) {
 			break;
 		default:
 			fprintf(out, " [unknown relop] ");
+			gError = true;
 			break;
 		}
 		printOperand(code->condOp.right, out);
@@ -578,6 +663,7 @@ void _printIRCode(IRCode* code, FILE* out) {
 		break;
 	default:
 		fprintf(out, "[unknown code]\n");
+		gError = true;
 		break;
 	}
 }

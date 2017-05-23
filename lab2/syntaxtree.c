@@ -3,6 +3,16 @@
 
 #include "syntaxtree.h"
 
+int numOfChild(SyntaxTreeNode *node) {
+	SyntaxTreeNode* child = node->firstChild;
+	int count = 0;
+	while (child != NULL) {
+		++count;
+		child = child->nextSibling;
+	}
+	return count;
+}
+
 SyntaxTreeNode* createTerminalNode(NodeType type, Attribute attr, int lineno) {
 	SyntaxTreeNode *newNode = (SyntaxTreeNode*)malloc(sizeof(SyntaxTreeNode));
 	newNode->type = type;

@@ -70,6 +70,7 @@ IROperand* createGetAddrOperand(bool isTemp, int varId, int tempId);
 IROperand* createSetAddrOperand(bool isTemp, int varId, int tempId);
 IROperand* createFuncOperand(char* funcName);
 IROperand* createLabelOperand(int labelId);
+IROperand* copyOperand(IROperand* operand);
 
 IRCode* createLabel(int labelId);
 IRCode* createFunction(char* funcName);

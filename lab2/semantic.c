@@ -296,16 +296,6 @@ void handleExtDef(SyntaxTreeNode* extDefNode, SymbolTable symbolTable, SymbolTab
 	freeSymbolTableType(type);
 }
 
-int numOfChild(SyntaxTreeNode *node) {
-	SyntaxTreeNode* child = node->firstChild;
-	int count = 0;
-	while (child != NULL) {
-		++count;
-		child = child->nextSibling;
-	}
-	return count;
-}
-
 bool handleArgs(SyntaxTreeNode* argsNode, FuncParam* param, SymbolTable symbolTable, SymbolTable functionTable) {
 	if (argsNode == NULL && param == NULL) {
 		return true;
