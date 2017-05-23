@@ -5,6 +5,8 @@
 
 #include "def.h"
 #include "trie.h"
+#include "syntaxtree.h"
+#include "symboltable.h"
 
 typedef struct IROperand {
 	enum {
@@ -15,7 +17,10 @@ typedef struct IROperand {
 	bool isTemp;
 	union {
 		int constValue;
-		int varId;
+		struct {
+			int varId;
+			TrieNode* varNode;
+		};
 		int tempId;
 		char* funcName;
 		int labelId;
@@ -59,7 +64,7 @@ typedef struct IRCode {
 } IRCode;
 
 IROperand* createConstOperand(int constValue);
-IROperand* createVarOperand(int varId);
+IROperand* createVarOperand(int varId, TrieNode* varNode);
 IROperand* createTempOperand(int tempId);
 IROperand* createGetAddrOperand(bool isTemp, int varId, int tempId);
 IROperand* createSetAddrOperand(bool isTemp, int varId, int tempId);
@@ -85,7 +90,10 @@ IRCode* createWrite(IROperand* op);
 
 IRCode* concat(IRCode* code1, IRCode* code2);
 
+int generateTempId();
+int generateLabelId();
 IRCode* generateSampleCode();
+IRCode* translateProgram(SyntaxTreeNode* program, SymbolTable symbolTable, SymbolTable functionTable);
 void printIRCode(IRCode* code, FILE* out);
 
 #endif

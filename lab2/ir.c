@@ -16,10 +16,11 @@ IROperand* createConstOperand(int constValue) {
 	return constOperand;
 }
 
-IROperand* createVarOperand(int varId) {
+IROperand* createVarOperand(int varId, TrieNode* varNode) {
 	IROperand* varOperand = createOperand();
 	varOperand->type = IRO_VAR;
 	varOperand->varId = varId;
+	varOperand->varNode = varNode;
 	return varOperand;
 }
 
@@ -229,13 +230,13 @@ IRCode* generateSampleCode() {
 	// READ t1
 	finalCode = concat(finalCode, createRead(createTempOperand(1)));
 	// v1 := t1
-	finalCode = concat(finalCode, createAssign(createTempOperand(1), createVarOperand(1)));
+	finalCode = concat(finalCode, createAssign(createTempOperand(1), createVarOperand(1, NULL)));
 	// t2 := #0
 	finalCode = concat(finalCode, createAssign(createConstOperand(0), createTempOperand(2)));
 	// IF v1 > t2 GOTO label1
-	finalCode = concat(finalCode, createCond(createVarOperand(1), createTempOperand(2), IR_GT, createLabelOperand(1)));
+	finalCode = concat(finalCode, createCond(createVarOperand(1, NULL), createTempOperand(2), IR_GT, createLabelOperand(1)));
 	// IF v1 < t2 GOTO label2
-	finalCode = concat(finalCode, createCond(createVarOperand(1), createTempOperand(2), IR_LT, createLabelOperand(1)));
+	finalCode = concat(finalCode, createCond(createVarOperand(1, NULL), createTempOperand(2), IR_LT, createLabelOperand(1)));
 	// WRITE t2
 	finalCode = concat(finalCode, createWrite(createTempOperand(2)));
 	// GOTO label3
@@ -259,6 +260,168 @@ IRCode* generateSampleCode() {
 	// RETURN t2
 	finalCode = concat(finalCode, createReturn(createTempOperand(2)));
 	return finalCode;
+}
+
+// ==========
+
+IRCode* translateExp(SyntaxTreeNode* exp, IROperand* place, SymbolTable symbolTable, SymbolTable functionTable) {
+	// TODO
+	return NULL;
+}
+	
+IRCode* translateCond(SyntaxTreeNode* exp, int trueLabel, int falseLabel, SymbolTable symbolTable, SymbolTable functionTable) {
+	// TODO
+	return NULL;
+}
+
+IRCode* translateCompSt(SyntaxTreeNode* compSt, SymbolTable symbolTable, SymbolTable functionTable);
+
+IRCode* translateStmt(SyntaxTreeNode* stmt, SymbolTable symbolTable, SymbolTable functionTable) {
+	if (stmt->type != N_STMT) {
+		printf("STMT MISMATCH!\n");
+		return NULL;
+	}
+	SyntaxTreeNode* firstChild = stmt->firstChild;
+	if (firstChild->type == N_EXP) {
+		// EXP SEMI
+		return translateExp(firstChild, NULL, symbolTable, functionTable);
+	}
+	else if (firstChild->type == N_COMPST) {
+		// COMPST
+		return translateCompSt(firstChild, symbolTable, functionTable);
+	}
+	else if (firstChild->type == N_RETURN) {
+		// RETURN EXP
+		int tempId = generateTempId();
+		return concat(translateExp(firstChild->nextSibling, createTempOperand(tempId), symbolTable, functionTable),
+				createReturn(createTempOperand(tempId)));
+	}
+	else if (firstChild->type == N_IF) {
+		// IF LP Exp RP Stmt
+		// IF LP Exp RP Stmt ELSE Stmt
+		SyntaxTreeNode* exp = firstChild->nextSibling->nextSibling;
+		SyntaxTreeNode* trueStmt = exp->nextSibling->nextSibling;
+		if (trueStmt->nextSibling == NULL) {
+			// IF LP Exp RP Stmt
+			int label1 = generateLabelId();
+			int label2 = generateLabelId();
+			IRCode* finalCode = NULL;
+			finalCode = concat(finalCode, translateCond(exp, label1, label2, symbolTable, functionTable));
+			finalCode = concat(finalCode, createLabel(label1));
+			finalCode = concat(finalCode, translateStmt(trueStmt, symbolTable, functionTable));
+			finalCode = concat(finalCode, createLabel(label2));
+			return finalCode;
+		}
+		else {
+			// IF LP Exp RP Stmt ELSE Stmt
+			SyntaxTreeNode* falseStmt = trueStmt->nextSibling->nextSibling;
+			int label1 = generateLabelId();
+			int label2 = generateLabelId();
+			int label3 = generateLabelId();
+			IRCode* finalCode = NULL;
+			finalCode = concat(finalCode, translateCond(exp, label1, label2, symbolTable, functionTable));
+			finalCode = concat(finalCode, createLabel(label1));
+			finalCode = concat(finalCode, translateStmt(trueStmt, symbolTable, functionTable));
+			finalCode = concat(finalCode, createGoto(label3));
+			finalCode = concat(finalCode, createLabel(label2));
+			finalCode = concat(finalCode, translateStmt(falseStmt, symbolTable, functionTable));
+			finalCode = concat(finalCode, createLabel(label3));
+			return finalCode;
+		}
+	}
+	else {
+		// WHILE LP Exp RP Stmt
+		SyntaxTreeNode* exp = firstChild->nextSibling->nextSibling;
+		SyntaxTreeNode* stmt = exp->nextSibling->nextSibling;
+		int label1 = generateLabelId();
+		int label2 = generateLabelId();
+		int label3 = generateLabelId();
+		IRCode* finalCode = NULL;
+		finalCode = concat(finalCode, createLabel(label1));
+		finalCode = concat(finalCode, translateCond(exp, label2, label3, symbolTable, functionTable));
+		finalCode = concat(finalCode, createLabel(label2));
+		finalCode = concat(finalCode, translateStmt(stmt, symbolTable, functionTable));
+		finalCode = concat(finalCode, createGoto(1));
+		finalCode = concat(finalCode, createLabel(label3));
+		return finalCode;
+	}
+}
+
+IRCode* translateDefList(SyntaxTreeNode* defList, SymbolTable symbolTable, SymbolTable functionTable) {
+	// TODO
+	if (defList->type != N_DEFLIST) {
+		printf("DEFLIST MISMATCH!\n");
+		return NULL;
+	}
+	return NULL;
+}
+
+IRCode* translateStmtList(SyntaxTreeNode* stmtList, SymbolTable symbolTable, SymbolTable functionTable) {
+	if (stmtList->type != N_STMTLIST) {
+		printf("STMTLIST MISMATCH!\n");
+		return NULL;
+	}
+	if (stmtList->firstChild == NULL) {
+		return NULL;
+	}
+	else {
+		return concat(translateStmt(stmtList->firstChild, symbolTable, functionTable), translateStmtList(stmtList->firstChild->nextSibling, symbolTable, functionTable));
+	}
+}
+
+IRCode* translateCompSt(SyntaxTreeNode* compSt, SymbolTable symbolTable, SymbolTable functionTable) {
+	if (compSt->type != N_COMPST) {
+		printf("COMPST MISMATCH!\n");
+		return NULL;
+	}
+	return concat(translateDefList(compSt->firstChild->nextSibling, symbolTable, functionTable),
+			translateStmtList(compSt->firstChild->nextSibling->nextSibling, symbolTable, functionTable));
+}
+
+IRCode* translateExtDef(SyntaxTreeNode* extDef, SymbolTable symbolTable, SymbolTable functionTable) {
+	if (extDef->type != N_EXTDEF) {
+		printf("EXTDEF MISMATCH!\n");
+		return NULL;
+	}
+	// Specifier FunDec Compst
+	char* funcName = retrieveStr(extDef->firstChild->nextSibling->firstChild->attr.id);
+	return concat(createFunction(funcName), translateCompSt(extDef->firstChild->nextSibling->nextSibling, symbolTable, functionTable));
+}
+
+IRCode* translateExtDefList(SyntaxTreeNode* extDefList, SymbolTable symbolTable, SymbolTable functionTable) {
+	if (extDefList->type != N_EXTDEFLIST) {
+		printf("EXTDEFLIST MISMATCH!\n");
+		return NULL;
+	}
+	if (extDefList->firstChild == NULL) {
+		return NULL;
+	}
+	else {
+		return concat(translateExtDef(extDefList->firstChild, symbolTable, functionTable),
+				translateExtDefList(extDefList->firstChild->nextSibling, symbolTable, functionTable));
+	}
+}
+
+IRCode* translateProgram(SyntaxTreeNode* program, SymbolTable symbolTable, SymbolTable functionTable) {
+	if (program->type != N_PROGRAM) {
+		printf("PROGRAM MISMATCH!\n");
+		return NULL;
+	}
+	return translateExtDefList(program->firstChild, symbolTable, functionTable);
+}
+
+// ==========
+
+int generateTempId() {
+	static int id = -1;
+	++ id;
+	return id;
+}
+
+int generateLabelId() {
+	static int id = -1;
+	++ id;
+	return id;
 }
 
 void printOperand(IROperand* op, FILE* out) {

@@ -42,7 +42,8 @@ int main(int argc, char* argv[]) {
 	if (gError) {
 		return 0;
 	}
-	gIRCode = generateSampleCode();
+	//gIRCode = generateSampleCode();
+	gIRCode = translateProgram(gTree, gSymbolTable, gFunctionTable);
 	printIRCode(gIRCode, stdout);
 	freeTree(gTree);
 	freeSymbolTable(gSymbolTable);
