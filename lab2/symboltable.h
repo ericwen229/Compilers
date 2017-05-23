@@ -51,6 +51,7 @@ typedef union SymbolType {
 typedef struct SymbolTableType {
 	SymbolTableTypeType typeType;
 	SymbolType type;
+	int id;
 } SymbolTableType;
 
 SymbolTable initSymbolTable();
@@ -63,6 +64,7 @@ SymbolTableType* copySymbolTableType(SymbolTableType* type);
 bool compareSymbolTableType(SymbolTableType* typeA, SymbolTableType* typeB);
 void freeSymbolTableType(SymbolTableType* type);
 void printSymbolTable(SymbolTable table);
+void assignId(SymbolTable table);
 void checkUndefinedFunc(SymbolTable table);
 void freeSymbolTable(SymbolTable table);
 

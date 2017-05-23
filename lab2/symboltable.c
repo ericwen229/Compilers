@@ -248,6 +248,7 @@ void printType(void* _type) {
 	else {
 		printf("<<UNKNOWN>>");
 	}
+	printf("[%d]", type->id);
 }
 
 void printTrieNode(TrieNode* node) {
@@ -259,6 +260,14 @@ void printTrieNode(TrieNode* node) {
 		putchar(' ');
 		printType(node->type);
 		putchar('\n');
+	}
+}
+
+void assignNodeId(TrieNode* node) {
+	static int id = 0;
+	if (node->isEnd && node->type != NULL) {
+		((SymbolTableType*)node->type)->id = id;
+		++ id;
 	}
 }
 
@@ -275,6 +284,10 @@ void freeTrieNode(TrieNode* node) {
 
 void printSymbolTable(SymbolTable table) {
 	traverseTrie(table, printTrieNode, NULL);
+}
+
+void assignId(SymbolTable table) {
+	traverseTrie(table, assignNodeId, NULL);
 }
 
 void checkUndefinedFuncNode(TrieNode* node) {

@@ -403,22 +403,23 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable, Sym
 		SyntaxTreeNode* firstChild = expNode->firstChild;
 		if (firstChild->type == N_ID) { // ID LP RP
 			TrieNode* funcNode = firstChild->attr.id;
-			if (funcNode->type == NULL) { // undefined function
+			char* funcName = retrieveStr(funcNode);
+			SymbolTableType* type = querySymbol(functionTable, funcName);
+			if (type == NULL) { // undefined function
 				char* funcName = retrieveStr(funcNode);
 				gError = true;
 				printf("Error type 2 at Line %d: Undefined function \"%s\".\n", firstChild->lineno, funcName);
 				free(funcName);
 				return NULL;
 			}
-			else if (((SymbolTableType*)(funcNode->type))->typeType != S_FUNCTION) {
+			else if (type->typeType != S_FUNCTION) {
 				char* idName = retrieveStr(funcNode);
 				gError = true;
 				printf("Error type 11 at Line %d: \"%s\" is not a function.\n", firstChild->lineno, idName);
 				free(idName);
 				return NULL;
 			}
-			SymbolTableType* funcType = funcNode->type;
-			return copySymbolTableType(funcType->type.funcType.returnType);
+			return copySymbolTableType(type->type.funcType.returnType);
 		}
 		else if (firstChild->type == N_LP) {
 			return handleExp(firstChild->nextSibling, symbolTable, functionTable);
@@ -576,7 +577,7 @@ void handleStmt(SyntaxTreeNode* stmtNode, SymbolTable symbolTable, SymbolTable f
 		if (type != NULL) freeSymbolTableType(type);
 	}
 	else if (stmtNode->firstChild->type == N_COMPST) {
-		semanticAnalysis(stmtNode->firstChild, symbolTable, NULL);
+		semanticAnalysis(stmtNode->firstChild, symbolTable, functionTable);
 	}
 	else if (stmtNode->firstChild->type == N_RETURN) {
 		SymbolTableType* returnType = handleExp(stmtNode->firstChild->nextSibling, symbolTable, functionTable);
