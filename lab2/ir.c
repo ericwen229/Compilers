@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "ir.h"
 
@@ -364,8 +365,20 @@ IRCode* translateExp(SyntaxTreeNode* exp, IROperand* place, SymbolTable symbolTa
 	else if (childNum == 3) {
 		if (exp->firstChild->type == N_ID) {
 			// ID LP RP
-			// TODO: implement
-			return NULL;
+			int tempId = generateTempId();
+			char* funcName = retrieveStr(exp->firstChild->attr.id);
+			IRCode* finalCode = NULL;
+			if (strcmp(funcName, "read") == 0) {
+				finalCode = concat(finalCode, createRead(createTempOperand(tempId)));
+			}
+			else {
+				finalCode = concat(finalCode, createCall(funcName, createTempOperand(tempId)));
+			}
+			free(funcName);
+			if (place != NULL) {
+				finalCode = concat(finalCode, createAssign(createTempOperand(tempId), place));
+			}
+			return finalCode;
 		}
 		else if (exp->firstChild->type == N_LP) {
 			// LP Exp RP
