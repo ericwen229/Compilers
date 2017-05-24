@@ -292,6 +292,7 @@ IRCode* translateExp(SyntaxTreeNode* exp, IROperand* place, SymbolTable symbolTa
 		else {
 			// FLOAT
 			printf("CANNOT TRANSLATE FLOATING NUMBERS!\n");
+			// TODO: release
 			gError = true;
 			return NULL;
 		}
@@ -308,23 +309,66 @@ IRCode* translateExp(SyntaxTreeNode* exp, IROperand* place, SymbolTable symbolTa
 		}
 		else {
 			// NOT Exp
-			if (place == NULL) return translateExp(exp->firstChild->nextSibling, NULL, symbolTable, functionTable);
-			else {
+			if (place == NULL) return translateExp(exp->firstChild->nextSibling, NULL, symbolTable, functionTable);	
+			int label1 = generateLabelId();
+			int label2 = generateLabelId();
+			IRCode* finalCode = NULL;
+			finalCode = concat(finalCode, createAssign(createConstOperand(0), place));
+			finalCode = concat(finalCode, translateCond(exp, label1, label2, symbolTable, functionTable));
+			finalCode = concat(finalCode, createLabel(label1));
+			finalCode = concat(finalCode, createAssign(createConstOperand(1), copyOperand(place)));
+			finalCode = concat(finalCode, createLabel(label2));
+			return finalCode;
+		}
+	}
+	else if (childNum == 3) {
+		if (exp->firstChild->type == N_ID) {
+			// ID LP RP
+			// TODO
+			return NULL;
+		}
+		else if (exp->firstChild->type == N_LP) {
+			// LP Exp RP
+			return translateExp(exp->firstChild->nextSibling, place, symbolTable, functionTable);
+		}
+		else if (exp->firstChild->nextSibling->type == N_DOT) {
+			// Exp DOT ID
+			printf("CANNOT TRANSLATE STRUCTURES!\n");
+			// TODO: release
+			gError = true;
+			return NULL;
+		}
+		else {
+			SyntaxTreeNode* firstChild = exp->firstChild;
+			SyntaxTreeNode* secondChild = firstChild->nextSibling;
+			SyntaxTreeNode* thirdChild = secondChild->nextSibling;
+			if (secondChild->type == N_ASSIGNOP) {
+				// Exp ASSIGNOP Exp
+				// TODO
+				return NULL;
+			}
+			else if (secondChild->type == N_RELOP) {
+				// Exp RELOP Exp
+				if (place == NULL) {
+					return concat(translateExp(firstChild, NULL, symbolTable, functionTable),
+							translateExp(thirdChild, NULL, symbolTable, functionTable));
+				}
 				int label1 = generateLabelId();
 				int label2 = generateLabelId();
 				IRCode* finalCode = NULL;
 				finalCode = concat(finalCode, createAssign(createConstOperand(0), place));
-				finalCode = concat(finalCode, translateCond(exp->firstChild->nextSibling, label1, label2, symbolTable, functionTable));
+				finalCode = concat(finalCode, translateCond(exp, label1, label2, symbolTable, functionTable));
 				finalCode = concat(finalCode, createLabel(label1));
 				finalCode = concat(finalCode, createAssign(createConstOperand(1), copyOperand(place)));
 				finalCode = concat(finalCode, createLabel(label2));
 				return finalCode;
 			}
+			else {
+				// Exp PLUS/MINUS/STAR/DIV Exp
+				// TODO
+				return NULL;
+			}
 		}
-	}
-	else if (childNum == 3) {
-		// TODO
-		return NULL;
 	}
 	else { // childNum == 4
 		// TODO

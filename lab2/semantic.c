@@ -487,6 +487,20 @@ SymbolTableType* handleExp(SyntaxTreeNode* expNode, SymbolTable symbolTable, Sym
 				newType->type.basicType = N_INT;
 				return newType;
 			}
+			else if (secondChild->type == N_AND || secondChild->type == N_OR) {
+				SymbolTableType* leftType = handleExp(firstChild, symbolTable, functionTable);
+				SymbolTableType* rightType = handleExp(thirdChild, symbolTable, functionTable);
+				if (leftType == NULL || leftType->typeType != S_BASIC || leftType->type.basicType != T_INT ||
+						rightType == NULL || rightType->typeType != S_BASIC || rightType->type.basicType != T_INT) {
+					gError = true;
+					printf("Error type 7 at Line %d: Type mismatched for operands.\n", secondChild->lineno);
+					if (leftType != NULL) freeSymbolTableType(leftType);
+					if (rightType != NULL) freeSymbolTableType(rightType);
+					return NULL;
+				}
+				freeSymbolTableType(rightType);
+				return leftType;
+			}
 			else { // PLUS MINUS STAR DIV
 				SymbolTableType* leftType = handleExp(firstChild, symbolTable, functionTable);
 				SymbolTableType* rightType = handleExp(thirdChild, symbolTable, functionTable);
