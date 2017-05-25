@@ -5,6 +5,7 @@
 #include "syntaxtree.h"
 #include "symboltable.h"
 #include "semantic.h"
+#include "ir.h"
 
 extern int yydebug;
 
@@ -13,6 +14,7 @@ bool gError = false;
 SymbolTable gSymbolTable = NULL;
 SymbolTable gFunctionTable = NULL;
 SyntaxTreeNode* gTree = NULL;
+IRCode* gIRCode = NULL;
 
 void yyrestart(FILE*);
 int yyparse(void);
@@ -40,6 +42,9 @@ int main(int argc, char* argv[]) {
 	if (gError) {
 		return 0;
 	}
+	//gIRCode = generateSampleCode();
+	gIRCode = translateProgram(gTree, gSymbolTable, gFunctionTable);
+	printIRCode(gIRCode, stdout);
 	freeTree(gTree);
 	freeSymbolTable(gSymbolTable);
 	freeSymbolTable(gFunctionTable);
