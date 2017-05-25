@@ -50,7 +50,7 @@ SyntaxTreeNode* createNode(NodeType type);
 void freeTree(SyntaxTreeNode* tree);
 void appendChild(SyntaxTreeNode* parent, SyntaxTreeNode* child);
 int numOfChild(SyntaxTreeNode *node);
-// void printTree(SyntaxTreeNode* tree, int level);
+void printTree(SyntaxTreeNode* tree, int level);
 
 #endif
 

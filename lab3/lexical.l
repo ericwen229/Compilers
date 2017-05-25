@@ -108,7 +108,7 @@ UNKNOWN		.
 			attr.relopType = GE;
 		}
 		else { // >
-			attr.relopType == LT;
+			attr.relopType = GT;
 		}
 	}
 	else if (yytext[0] == '<') {

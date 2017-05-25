@@ -33,6 +33,7 @@ int main(int argc, char* argv[]) {
 	if (gError) {
 		return 0;
 	}
+	//printTree(gTree, 0);
 	semanticAnalysis(gTree, gSymbolTable, gFunctionTable);
 	checkUndefinedFunc(gFunctionTable);
 	assignId(gSymbolTable);

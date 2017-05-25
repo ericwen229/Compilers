@@ -95,7 +95,12 @@ RelOp convertRelOp(RelopType relOp) {
 	case EQ:
 		return IR_EQ;
 		break;
+	case NE:
+		return IR_NE;
+		break;
 	default:
+		printf("[unknown relop]\n");
+		gError = true;
 		return IR_NE;
 	}
 }
@@ -319,7 +324,7 @@ IRCode* translateExpLeft(SyntaxTreeNode* exp, IROperand* src, SymbolTable symbol
 	}
 	else if (exp->firstChild->nextSibling->type == N_LB) {
 		// Exp LB Exp RB
-		// TODO: implement
+		// TODO: array
 		return NULL;
 	}
 	else {
@@ -493,12 +498,13 @@ IRCode* translateExp(SyntaxTreeNode* exp, IROperand* place, SymbolTable symbolTa
 	else { // childNum == 4
 		if (exp->firstChild->type == N_ID) {
 			// ID LP ARGS RP
-			// TODO: implement
+			// char* funcName = retrieveStr(exp->firstChild->attr.id);
+			// TODO: argument
 			return NULL;
 		}
 		else {
 			// Exp LB Exp RB
-			// TODO: implement
+			// TODO: array
 			return NULL;
 		}
 	}
@@ -512,8 +518,14 @@ IRCode* translateCond(SyntaxTreeNode* exp, int trueLabel, int falseLabel, Symbol
 	else if (childNum == 3) {
 		SyntaxTreeNode* secondChild = exp->firstChild->nextSibling;
 		if (secondChild->type == N_RELOP) {
-			// TODO
-			return NULL;
+			int temp1 = generateTempId();
+			int temp2 = generateTempId();
+			IRCode* finalCode = NULL;
+			finalCode = concat(finalCode, translateExp(exp->firstChild, createTempOperand(temp1), symbolTable, functionTable));
+			finalCode = concat(finalCode, translateExp(secondChild->nextSibling, createTempOperand(temp2), symbolTable, functionTable));
+			finalCode = concat(finalCode, createCond(createTempOperand(temp1), createTempOperand(temp2), convertRelOp(secondChild->attr.relopType), createLabelOperand(trueLabel)));
+			finalCode = concat(finalCode, createGoto(falseLabel));
+			return finalCode;
 		}
 		else if (secondChild->type == N_AND) {
 			int label1 = generateLabelId();
@@ -620,7 +632,7 @@ IRCode* translateDefList(SyntaxTreeNode* defList, SymbolTable symbolTable, Symbo
 		gError = true;
 		return NULL;
 	}
-	// TODO: implement
+	// TODO: array
 	return NULL;
 }
 
@@ -656,7 +668,7 @@ IRCode* translateExtDef(SyntaxTreeNode* extDef, SymbolTable symbolTable, SymbolT
 	if (extDef->firstChild->nextSibling->type == N_FUNDEC) {
 		// Specifier FunDec Compst
 		char* funcName = retrieveStr(extDef->firstChild->nextSibling->firstChild->attr.id);
-		// TODO: implement
+		// TODO: array
 		return concat(createFunction(funcName), translateCompSt(extDef->firstChild->nextSibling->nextSibling, symbolTable, functionTable));
 	}
 	else if (extDef->firstChild->nextSibling->type == N_SEMI) {

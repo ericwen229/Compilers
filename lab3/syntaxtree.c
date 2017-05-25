@@ -61,7 +61,7 @@ void appendChild(SyntaxTreeNode* parent, SyntaxTreeNode* child) {
 	currChild->nextSibling = child;
 }
 
-/* void printTree(SyntaxTreeNode* tree, int level) {
+void printTree(SyntaxTreeNode* tree, int level) {
 
 	static char* nodeName[] = {
 		"SEMI", "COMMA", "ASSIGNOP", "RELOP",
@@ -102,16 +102,17 @@ void appendChild(SyntaxTreeNode* parent, SyntaxTreeNode* child) {
 			putchar(' ');
 		}
 		printf("%s", nodeName[(int)tree->type]);
-		IdTableCell* cell = NULL;
+		char* idName = NULL;
 		switch (tree->type) {
 			case N_ID:
-				cell = getCell(gIdTable, tree->attr.id);
-				printf(": %s", cell->name);
+				idName = retrieveStr(tree->attr.id);
+				printf(": %s", idName);
+				free(idName);
 				break;
 			case N_TYPE:
 				switch (tree->attr.typeType) {
-					case TYPEINT: printf(": int"); break;
-					case TYPEFLOAT: printf(": float"); break;
+					case T_INT: printf(": int"); break;
+					case T_FLOAT: printf(": float"); break;
 					default: break;
 				}
 				break;
@@ -132,5 +133,5 @@ void appendChild(SyntaxTreeNode* parent, SyntaxTreeNode* child) {
 		}
 		putchar('\n');
 	}
-} */
+}
 
