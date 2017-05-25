@@ -28,7 +28,7 @@ typedef struct IROperand {
 } IROperand;
 
 typedef enum RelOp {
-	IR_LT, IR_LE, IR_EQ, IR_GE, IR_GT
+	IR_LT, IR_LE, IR_EQ, IR_GE, IR_GT, IR_NE
 } RelOp;
 
 typedef struct IRCode {
@@ -72,6 +72,7 @@ IROperand* createFuncOperand(char* funcName);
 IROperand* createLabelOperand(int labelId);
 IROperand* copyOperand(IROperand* operand);
 void freeOperand(IROperand* operand);
+RelOp convertRelOp(RelopType relOp);
 
 IRCode* createLabel(int labelId);
 IRCode* createFunction(char* funcName);
@@ -97,6 +98,7 @@ int generateLabelId();
 IRCode* generateSampleCode();
 IRCode* translateProgram(SyntaxTreeNode* program, SymbolTable symbolTable, SymbolTable functionTable);
 void printIRCode(IRCode* code, FILE* out);
+void freeIRCode(IRCode* code);
 
 #endif
 

@@ -45,6 +45,7 @@ int main(int argc, char* argv[]) {
 	//gIRCode = generateSampleCode();
 	gIRCode = translateProgram(gTree, gSymbolTable, gFunctionTable);
 	printIRCode(gIRCode, stdout);
+	freeIRCode(gIRCode);
 	freeTree(gTree);
 	freeSymbolTable(gSymbolTable);
 	freeSymbolTable(gFunctionTable);

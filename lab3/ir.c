@@ -78,6 +78,28 @@ void freeOperand(IROperand* operand) {
 	free(operand);
 }
 
+RelOp convertRelOp(RelopType relOp) {
+	switch (relOp) {
+	case LT:
+		return IR_LT;
+		break;
+	case GT:
+		return IR_GT;
+		break;
+	case LE:
+		return IR_LE;
+		break;
+	case GE:
+		return IR_GE;
+		break;
+	case EQ:
+		return IR_EQ;
+		break;
+	default:
+		return IR_NE;
+	}
+}
+
 // ==========
 
 IRCode* createCode() {
@@ -483,8 +505,39 @@ IRCode* translateExp(SyntaxTreeNode* exp, IROperand* place, SymbolTable symbolTa
 }
 	
 IRCode* translateCond(SyntaxTreeNode* exp, int trueLabel, int falseLabel, SymbolTable symbolTable, SymbolTable functionTable) {
-	// TODO: implement
-	return NULL;
+	int childNum = numOfChild(exp);
+	if (childNum == 2 && exp->firstChild->type == N_NOT) {
+		return translateCond(exp->firstChild->nextSibling, falseLabel, trueLabel, symbolTable, functionTable);
+	}
+	else if (childNum == 3) {
+		SyntaxTreeNode* secondChild = exp->firstChild->nextSibling;
+		if (secondChild->type == N_RELOP) {
+			// TODO
+			return NULL;
+		}
+		else if (secondChild->type == N_AND) {
+			int label1 = generateLabelId();
+			IRCode* finalCode = NULL;
+			finalCode = concat(finalCode, translateCond(exp->firstChild, label1, falseLabel, symbolTable, functionTable));
+			finalCode = concat(finalCode, createLabel(label1));
+			finalCode = concat(finalCode, translateCond(secondChild->nextSibling, trueLabel, falseLabel, symbolTable, functionTable));
+			return finalCode;
+		}
+		else if (secondChild->type == N_OR) {
+			int label1 = generateLabelId();
+			IRCode* finalCode = NULL;
+			finalCode = concat(finalCode, translateCond(exp->firstChild, trueLabel, label1, symbolTable, functionTable));
+			finalCode = concat(finalCode, createLabel(label1));
+			finalCode = concat(finalCode, translateCond(secondChild->nextSibling, trueLabel, falseLabel, symbolTable, functionTable));
+			return finalCode;
+		}
+	}
+	int tempId = generateTempId();
+	IRCode* finalCode = NULL;
+	finalCode = concat(finalCode, translateExp(exp, createTempOperand(tempId), symbolTable, functionTable));
+	finalCode = concat(finalCode, createCond(createTempOperand(tempId), createConstOperand(0), IR_NE, createLabelOperand(trueLabel)));
+	finalCode = concat(finalCode, createGoto(falseLabel));
+	return finalCode;
 }
 
 IRCode* translateCompSt(SyntaxTreeNode* compSt, SymbolTable symbolTable, SymbolTable functionTable);
@@ -766,6 +819,9 @@ void _printIRCode(IRCode* code, FILE* out) {
 		case IR_GT:
 			fprintf(out, " > ");
 			break;
+		case IR_NE:
+			fprintf(out, " != ");
+			break;
 		default:
 			fprintf(out, " [unknown relop] ");
 			gError = true;
@@ -827,6 +883,90 @@ void printIRCode(IRCode* code, FILE* out) {
 	while (code != head) {
 		_printIRCode(code, out);
 		code = code->next;
+	}
+}
+
+void _freeIRCode(IRCode* code) {
+	if (code == NULL) return;
+	switch (code->type) {
+	case IR_LABEL:
+		freeOperand(code->singleOp.op);
+		break;
+	case IR_FUNC:
+		freeOperand(code->singleOp.op);
+		break;
+	case IR_ASSIGN:
+		freeOperand(code->singleOp.dest);
+		freeOperand(code->singleOp.op);
+		break;
+	case IR_ADD:
+		freeOperand(code->binOp.dest);
+		freeOperand(code->binOp.left);
+		freeOperand(code->binOp.right);
+		break;
+	case IR_MINUS:
+		freeOperand(code->binOp.dest);
+		freeOperand(code->binOp.left);
+		freeOperand(code->binOp.right);
+		break;
+	case IR_STAR:
+		freeOperand(code->binOp.dest);
+		freeOperand(code->binOp.left);
+		freeOperand(code->binOp.right);
+		break;
+	case IR_DIV:
+		freeOperand(code->binOp.dest);
+		freeOperand(code->binOp.left);
+		freeOperand(code->binOp.right);
+		break;
+	case IR_GOTO:
+		freeOperand(code->singleOp.op);
+		break;
+	case IR_COND:
+		freeOperand(code->condOp.left);
+		freeOperand(code->condOp.right);
+		freeOperand(code->condOp.dest);
+		break;
+	case IR_RETURN:
+		freeOperand(code->singleOp.op);
+		break;
+	case IR_DEC:
+		freeOperand(code->decOp.op);
+		break;
+	case IR_ARG:
+		freeOperand(code->singleOp.op);
+		break;
+	case IR_CALL:
+		freeOperand(code->singleOp.dest);
+		freeOperand(code->singleOp.op);
+		break;
+	case IR_PARAM:
+		freeOperand(code->singleOp.op);
+		break;
+	case IR_READ:
+		freeOperand(code->singleOp.dest);
+		break;
+	case IR_WRITE:
+		freeOperand(code->singleOp.op);
+		break;
+	default:
+		gError = true;
+		break;
+	}
+}
+
+void freeIRCode(IRCode* code) {
+	if (code == NULL) return;
+	IRCode* head = code;
+
+	IRCode* curr = head;
+	IRCode* next = curr->next;
+	_freeIRCode(curr);
+
+	while (next != head) {
+		curr = next;
+		next = curr->next;
+		_freeIRCode(curr);
 	}
 }
 
