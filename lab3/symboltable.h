@@ -54,6 +54,11 @@ typedef struct SymbolTableType {
 	int id;
 } SymbolTableType;
 
+typedef struct SizeList {
+	int size;
+	struct SizeList* next;
+} SizeList;
+
 SymbolTable initSymbolTable();
 SymbolTable initFunctionTable();
 TrieNode* insertSymbol(SymbolTable table, char* symbol, SymbolTableType* type);
@@ -67,6 +72,8 @@ void printSymbolTable(SymbolTable table);
 void assignId(SymbolTable table);
 void checkUndefinedFunc(SymbolTable table);
 void freeSymbolTable(SymbolTable table);
+
+SizeList* getArrSize(SymbolTableType* arrType);
 
 #endif
 

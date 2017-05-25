@@ -310,3 +310,18 @@ void freeSymbolTable(SymbolTable table) {
 	traverseTrie(table, freeTrieNodeType, freeTrieNode);
 }
 
+SizeList* getArrSize(SymbolTableType* arrType) {
+	if (arrType->type.arrayType.elementType->typeType == S_BASIC) {
+		SizeList* list = (SizeList*)malloc(sizeof(SizeList));
+		list->next = NULL;
+		list->size = 4;
+		return list;
+	}
+	else {
+		SizeList* list = (SizeList*)malloc(sizeof(SizeList));
+		list->next = getArrSize(arrType->type.arrayType.elementType);
+		list->size = arrType->type.arrayType.elementType->type.arrayType.len * list->next->size;
+		return list;
+	}
+}
+

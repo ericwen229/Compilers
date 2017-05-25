@@ -307,6 +307,31 @@ IRCode* generateSampleCode() {
 // ==========
 
 IRCode* translateCond(SyntaxTreeNode* exp, int trueLabel, int falseLabel, SymbolTable symbolTable, SymbolTable functionTable);
+IRCode* translateExp(SyntaxTreeNode* exp, IROperand* place, SymbolTable symbolTable, SymbolTable functionTable);
+
+IRCode* calculateSize(SyntaxTreeNode* exp, SizeList** sizeList, int baseTemp, SymbolTable symbolTable, SymbolTable functionTable) {
+	IRCode* finalCode = NULL;
+	if (exp->firstChild->type == N_ID) {
+		// ID
+		SymbolTableType* arrType = exp->firstChild->attr.id->type;
+		(*sizeList) = getArrSize(arrType);
+		finalCode = concat(finalCode, createAssign(createVarOperand(arrType->id, NULL), createTempOperand(baseTemp)));
+	}
+	else {
+		// Exp LB Exp RB
+		SizeList* superSizeList = NULL;
+		int superBaseTemp = generateTempId();
+		finalCode = concat(finalCode, calculateSize(exp->firstChild, &superSizeList, superBaseTemp, symbolTable, functionTable));
+		(*sizeList) = superSizeList->next;
+		int size = superSizeList->size;
+		free(superSizeList);
+		int indexTemp = generateTempId();
+		finalCode = concat(finalCode, translateExp(exp->firstChild->nextSibling->nextSibling, createTempOperand(indexTemp), symbolTable, functionTable));
+		finalCode = concat(finalCode, createStar(createTempOperand(indexTemp), createConstOperand(size), createTempOperand(indexTemp)));
+		finalCode = concat(finalCode, createAdd(createTempOperand(superBaseTemp), createTempOperand(indexTemp), createTempOperand(baseTemp)));
+	}
+	return finalCode;
+}
 
 IRCode* translateExpLeft(SyntaxTreeNode* exp, IROperand* src, SymbolTable symbolTable, SymbolTable functionTable) {
 	if (exp->type != N_EXP) {
@@ -324,8 +349,18 @@ IRCode* translateExpLeft(SyntaxTreeNode* exp, IROperand* src, SymbolTable symbol
 	}
 	else if (exp->firstChild->nextSibling->type == N_LB) {
 		// Exp LB Exp RB
-		// TODO: array
-		return NULL;
+		IRCode* finalCode = NULL;
+		SizeList* sizeList = NULL;
+		int baseTemp = generateTempId();
+		finalCode = concat(finalCode, calculateSize(exp->firstChild, &sizeList, baseTemp, symbolTable, functionTable));
+		int size = sizeList->size;
+		free(sizeList);
+		int indexTemp = generateTempId();
+		finalCode = concat(finalCode, translateExp(exp->firstChild->nextSibling->nextSibling, createTempOperand(indexTemp), symbolTable, functionTable));
+		finalCode = concat(finalCode, createStar(createTempOperand(indexTemp), createConstOperand(size), createTempOperand(indexTemp)));
+		finalCode = concat(finalCode, createAdd(createTempOperand(baseTemp), createTempOperand(indexTemp), createTempOperand(baseTemp)));
+		finalCode = concat(finalCode, createAssign(src, createSetAddrOperand(true, -1, baseTemp)));
+		return finalCode;
 	}
 	else {
 		// Exp DOT ID
@@ -335,8 +370,6 @@ IRCode* translateExpLeft(SyntaxTreeNode* exp, IROperand* src, SymbolTable symbol
 		return NULL;
 	}
 }
-
-IRCode* translateExp(SyntaxTreeNode* exp, IROperand* place, SymbolTable symbolTable, SymbolTable functionTable);
 
 IRCode* translateArgs(SyntaxTreeNode* args, ArgList** argList, SymbolTable symbolTable, SymbolTable functionTable) {
 	if (args->type != N_ARGS) {
