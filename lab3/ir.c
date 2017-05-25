@@ -336,6 +336,38 @@ IRCode* translateExpLeft(SyntaxTreeNode* exp, IROperand* src, SymbolTable symbol
 	}
 }
 
+IRCode* translateExp(SyntaxTreeNode* exp, IROperand* place, SymbolTable symbolTable, SymbolTable functionTable);
+
+IRCode* translateArgs(SyntaxTreeNode* args, ArgList** argList, SymbolTable symbolTable, SymbolTable functionTable) {
+	if (args->firstChild->nextSibling == NULL) {
+		// Exp
+		int tempId = generateTempId();
+		ArgList* arg = createArgList(createTempOperand(tempId));
+		if ((*argList) == NULL) {
+			(*argList) = arg;
+		}
+		else {
+			arg->next = (*argList);
+			(*argList) = arg;
+		}
+		return translateExp(args->firstChild, createTempOperand(tempId), symbolTable, functionTable);
+	}
+	else {
+		// Exp COMMA Args
+		int tempId = generateTempId();
+		ArgList* arg = createArgList(createTempOperand(tempId));
+		if ((*argList) == NULL) {
+			(*argList) = arg;
+		}
+		else {
+			arg->next = (*argList);
+			(*argList) = arg;
+		}
+		return concat(translateExp(args->firstChild, createTempOperand(tempId), symbolTable, functionTable),
+				translateArgs(args->firstChild->nextSibling->nextSibling, argList, symbolTable, functionTable));
+	}
+}
+
 IRCode* translateExp(SyntaxTreeNode* exp, IROperand* place, SymbolTable symbolTable, SymbolTable functionTable) {
 	if (exp->type != N_EXP) {
 		printf("EXP MISMATCH!\n");
@@ -498,9 +530,31 @@ IRCode* translateExp(SyntaxTreeNode* exp, IROperand* place, SymbolTable symbolTa
 	else { // childNum == 4
 		if (exp->firstChild->type == N_ID) {
 			// ID LP ARGS RP
-			// char* funcName = retrieveStr(exp->firstChild->attr.id);
-			// TODO: argument
-			return NULL;
+			char* funcName = retrieveStr(exp->firstChild->attr.id);
+			ArgList* argList = NULL;
+			IRCode* finalCode = NULL;
+			finalCode = concat(finalCode, translateArgs(exp->firstChild->nextSibling->nextSibling, &argList, symbolTable, functionTable));
+			if (strcmp(funcName, "write") == 0) {
+				finalCode = concat(finalCode, createWrite(copyOperand(argList->arg)));
+				freeArgList(argList);
+			}
+			else {
+				ArgList* currArg = argList;
+				while (currArg != NULL) {
+					finalCode = concat(finalCode, createArg(copyOperand(currArg->arg)));
+					currArg = currArg->next;
+				}
+
+				if (place != NULL) {
+					finalCode = concat(finalCode, createCall(funcName, place));
+				}
+				else {
+					int tempId = generateTempId();
+					finalCode = concat(finalCode, createCall(funcName, createTempOperand(tempId)));
+				}
+			}
+			free(funcName);
+			return finalCode;
 		}
 		else {
 			// Exp LB Exp RB
@@ -979,6 +1033,27 @@ void freeIRCode(IRCode* code) {
 		curr = next;
 		next = curr->next;
 		_freeIRCode(curr);
+	}
+}
+
+ArgList* createArgList(IROperand* arg) {
+	ArgList* newArg = (ArgList*)malloc(sizeof(ArgList));
+	newArg->arg = arg;
+	newArg->next = NULL;
+	return newArg;
+}
+
+void freeArgList(ArgList* argList) {
+	if (argList == NULL) return;
+	ArgList* curr = argList;
+	ArgList* next = curr->next;
+	freeOperand(curr->arg);
+	free(curr);
+	while (next != NULL) {
+		curr = next;
+		next = curr->next;
+		freeOperand(curr->arg);
+		free(curr);
 	}
 }
 

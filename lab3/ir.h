@@ -63,6 +63,11 @@ typedef struct IRCode {
 	struct IRCode* next;
 } IRCode;
 
+typedef struct ArgList {
+	IROperand* arg;
+	struct ArgList* next;
+} ArgList;
+
 IROperand* createConstOperand(int constValue);
 IROperand* createVarOperand(int varId, TrieNode* varNode);
 IROperand* createTempOperand(int tempId);
@@ -99,6 +104,9 @@ IRCode* generateSampleCode();
 IRCode* translateProgram(SyntaxTreeNode* program, SymbolTable symbolTable, SymbolTable functionTable);
 void printIRCode(IRCode* code, FILE* out);
 void freeIRCode(IRCode* code);
+
+ArgList* createArgList(IROperand* arg);
+void freeArgList(ArgList* argList);
 
 #endif
 
