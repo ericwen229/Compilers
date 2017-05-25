@@ -339,6 +339,11 @@ IRCode* translateExpLeft(SyntaxTreeNode* exp, IROperand* src, SymbolTable symbol
 IRCode* translateExp(SyntaxTreeNode* exp, IROperand* place, SymbolTable symbolTable, SymbolTable functionTable);
 
 IRCode* translateArgs(SyntaxTreeNode* args, ArgList** argList, SymbolTable symbolTable, SymbolTable functionTable) {
+	if (args->type != N_ARGS) {
+		printf("ARGS MISMATCH!\n");
+		gError = true;
+		return NULL;
+	}
 	if (args->firstChild->nextSibling == NULL) {
 		// Exp
 		int tempId = generateTempId();
@@ -508,7 +513,7 @@ IRCode* translateExp(SyntaxTreeNode* exp, IROperand* place, SymbolTable symbolTa
 				int temp2 = generateTempId();
 				IRCode* finalCode = NULL;
 				finalCode = concat(finalCode, translateExp(firstChild, createTempOperand(temp1), symbolTable, functionTable));
-				finalCode = concat(finalCode, translateExp(firstChild, createTempOperand(temp2), symbolTable, functionTable));
+				finalCode = concat(finalCode, translateExp(firstChild->nextSibling->nextSibling, createTempOperand(temp2), symbolTable, functionTable));
 				switch (secondChild->type) {
 				case N_PLUS:
 					finalCode = concat(finalCode, createAdd(createTempOperand(temp1), createTempOperand(temp2), place));
@@ -537,6 +542,7 @@ IRCode* translateExp(SyntaxTreeNode* exp, IROperand* place, SymbolTable symbolTa
 			if (strcmp(funcName, "write") == 0) {
 				finalCode = concat(finalCode, createWrite(copyOperand(argList->arg)));
 				freeArgList(argList);
+				free(funcName);
 			}
 			else {
 				ArgList* currArg = argList;
@@ -544,6 +550,7 @@ IRCode* translateExp(SyntaxTreeNode* exp, IROperand* place, SymbolTable symbolTa
 					finalCode = concat(finalCode, createArg(copyOperand(currArg->arg)));
 					currArg = currArg->next;
 				}
+				freeArgList(argList);
 
 				if (place != NULL) {
 					finalCode = concat(finalCode, createCall(funcName, place));
@@ -553,7 +560,6 @@ IRCode* translateExp(SyntaxTreeNode* exp, IROperand* place, SymbolTable symbolTa
 					finalCode = concat(finalCode, createCall(funcName, createTempOperand(tempId)));
 				}
 			}
-			free(funcName);
 			return finalCode;
 		}
 		else {
@@ -565,6 +571,11 @@ IRCode* translateExp(SyntaxTreeNode* exp, IROperand* place, SymbolTable symbolTa
 }
 	
 IRCode* translateCond(SyntaxTreeNode* exp, int trueLabel, int falseLabel, SymbolTable symbolTable, SymbolTable functionTable) {
+	if (exp->type != N_EXP) {
+		printf("COND MISMATCH!\n");
+		gError = true;
+		return NULL;
+	}
 	int childNum = numOfChild(exp);
 	if (childNum == 2 && exp->firstChild->type == N_NOT) {
 		return translateCond(exp->firstChild->nextSibling, falseLabel, trueLabel, symbolTable, functionTable);
@@ -693,6 +704,7 @@ IRCode* translateDefList(SyntaxTreeNode* defList, SymbolTable symbolTable, Symbo
 IRCode* translateStmtList(SyntaxTreeNode* stmtList, SymbolTable symbolTable, SymbolTable functionTable) {
 	if (stmtList->type != N_STMTLIST) {
 		printf("STMTLIST MISMATCH!\n");
+		gError = true;
 		return NULL;
 	}
 	if (stmtList->firstChild == NULL) {
@@ -713,6 +725,60 @@ IRCode* translateCompSt(SyntaxTreeNode* compSt, SymbolTable symbolTable, SymbolT
 			translateStmtList(compSt->firstChild->nextSibling->nextSibling, symbolTable, functionTable));
 }
 
+IRCode* translateVarDec(SyntaxTreeNode* varDec, SymbolTable symbolTable, SymbolTable functionTable) {
+	if (varDec->type != N_VARDEC) {
+		printf("VARDEC MISMATCH!\n");
+		gError = true;
+		return NULL;
+	}
+	if (varDec->firstChild->type == N_ID) {
+		TrieNode* varNode = varDec->firstChild->attr.id;
+		int varId = ((SymbolTableType*)varDec->firstChild->attr.id->type)->id;
+		return createParam(createVarOperand(varId, varNode));
+	}
+	else {
+		return translateVarDec(varDec->firstChild, symbolTable, functionTable);
+	}
+}
+
+IRCode* translateParamDec(SyntaxTreeNode* paramDec, SymbolTable symbolTable, SymbolTable functionTable) {
+	if (paramDec->type != N_PARAMDEC) {
+		printf("PARAMDEC MISMATCH!\n");
+		gError = true;
+		return NULL;
+	}
+	return translateVarDec(paramDec->firstChild->nextSibling, symbolTable, functionTable);
+}
+
+IRCode* translateVarList(SyntaxTreeNode* varList, SymbolTable symbolTable, SymbolTable functionTable) {
+	if (varList->type != N_VARLIST) {
+		printf("VARLIST MISMATCH!\n");
+		gError = true;
+		return NULL;
+	}
+	IRCode* finalCode = NULL;
+	finalCode = concat(finalCode, translateParamDec(varList->firstChild, symbolTable, functionTable));
+	if (varList->firstChild->nextSibling != NULL) {
+		finalCode = concat(finalCode, translateVarList(varList->firstChild->nextSibling->nextSibling, symbolTable, functionTable));
+	}
+	return finalCode;
+}
+
+IRCode* translateFunDec(SyntaxTreeNode* funDec, SymbolTable symbolTable, SymbolTable functionTable) {
+	if (funDec->type != N_FUNDEC) {
+		printf("FUNDEC MISMATCH!\n");
+		gError = true;
+		return NULL;
+	}
+	char* funcName = retrieveStr(funDec->firstChild->attr.id);
+	IRCode* finalCode = NULL;
+	finalCode = concat(finalCode, createFunction(funcName));
+	if (funDec->firstChild->nextSibling->nextSibling->nextSibling != NULL) {
+		finalCode = concat(finalCode, translateVarList(funDec->firstChild->nextSibling->nextSibling, symbolTable, functionTable));
+	}
+	return finalCode;
+}
+
 IRCode* translateExtDef(SyntaxTreeNode* extDef, SymbolTable symbolTable, SymbolTable functionTable) {
 	if (extDef->type != N_EXTDEF) {
 		printf("EXTDEF MISMATCH!\n");
@@ -721,9 +787,8 @@ IRCode* translateExtDef(SyntaxTreeNode* extDef, SymbolTable symbolTable, SymbolT
 	}
 	if (extDef->firstChild->nextSibling->type == N_FUNDEC) {
 		// Specifier FunDec Compst
-		char* funcName = retrieveStr(extDef->firstChild->nextSibling->firstChild->attr.id);
-		// TODO: array
-		return concat(createFunction(funcName), translateCompSt(extDef->firstChild->nextSibling->nextSibling, symbolTable, functionTable));
+		return concat(translateFunDec(extDef->firstChild->nextSibling, symbolTable, functionTable),
+				translateCompSt(extDef->firstChild->nextSibling->nextSibling, symbolTable, functionTable));
 	}
 	else if (extDef->firstChild->nextSibling->type == N_SEMI) {
 		// Specifier SEMI
