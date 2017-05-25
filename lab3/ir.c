@@ -501,7 +501,6 @@ IRCode* translateExp(SyntaxTreeNode* exp, IROperand* place, SymbolTable symbolTa
 				finalCode = concat(finalCode, createAssign(createConstOperand(1), copyOperand(place)));
 				finalCode = concat(finalCode, createLabel(label2));
 				return finalCode;
-				return NULL;
 			}
 			else {
 				// Exp PLUS/MINUS/STAR/DIV Exp
