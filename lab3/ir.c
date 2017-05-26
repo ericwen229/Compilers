@@ -761,7 +761,7 @@ IRCode* translateStmt(SyntaxTreeNode* stmt, SymbolTable symbolTable, SymbolTable
 		finalCode = concat(finalCode, translateCond(exp, label2, label3, symbolTable, functionTable));
 		finalCode = concat(finalCode, createLabel(label2));
 		finalCode = concat(finalCode, translateStmt(stmt, symbolTable, functionTable));
-		finalCode = concat(finalCode, createGoto(1));
+		finalCode = concat(finalCode, createGoto(label1));
 		finalCode = concat(finalCode, createLabel(label3));
 		return finalCode;
 	}
@@ -822,8 +822,7 @@ IRCode* translateDec(SyntaxTreeNode* dec, SymbolTable symbolTable, SymbolTable f
 	else {
 		int varId = ((SymbolTableType*)dec->firstChild->firstChild->attr.id->type)->id;
 		int tempId = generateTempId();
-		return concat(translateExp(dec->firstChild->nextSibling->nextSibling, createVarOperand(varId, NULL), symbolTable, functionTable),
-				createAssign(createTempOperand(tempId), createVarOperand(varId, NULL)));
+		return translateExp(dec->firstChild->nextSibling->nextSibling, createVarOperand(varId, NULL), symbolTable, functionTable);
 	}
 }
 
