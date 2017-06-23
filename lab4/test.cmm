@@ -1,10 +1,7 @@
 int main() {
-	int a[10];
 	int i;
-	i = read();
-	while (i < 10) {
-		i = i + 1;
-	}
+	int j;
+	j = i;
 	return 0;
 }
 

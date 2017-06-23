@@ -17,7 +17,50 @@ void createReadFunc(FILE* out) {
 void createWriteFunc(FILE* out) {
 }
 
-void _translateIRCode(IRCode* code, FILE* out) {
+void _translateIRCode(IRCode* code, FILE* out, TrieNode* funcStackSize, TrieNode* varStackPos) {
+	char buf1[20];
+	char buf2[20];
+	char buf3[20];
+	switch (code->type) {
+	case IR_LABEL:
+		break;
+	case IR_FUNC:
+		printOperand(code->singleOp.op, out);
+		fprintf(out, ":\n");
+		fprintf(out, "  addi $sp, $sp, -4\n");
+		fprintf(out, "  sw $fp, 0($sp)\n"); // push $fp
+		fprintf(out, "  move $sp, $fp\n");
+		fprintf(out, "  addi $sp, $sp, -%d\n", queryNode(funcStackSize, code->singleOp.op->funcName)->intValue);
+		break;
+	case IR_ASSIGN:
+		break;
+	case IR_ADD:
+		break;
+	case IR_MINUS:
+		break;
+	case IR_STAR:
+		break;
+	case IR_DIV:
+		break;
+	case IR_GOTO:
+		break;
+	case IR_COND:
+		break;
+	case IR_RETURN:
+		break;
+	case IR_DEC:
+		break;
+	case IR_ARG:
+		break;
+	case IR_CALL:
+		break;
+	case IR_PARAM:
+		break;
+	case IR_READ:
+		break;
+	case IR_WRITE:
+		break;
+	}
 }
 
 void getOpName(IROperand* op, char* buffer) {
@@ -100,8 +143,8 @@ void analyzeStackInfo(IRCode* code, TrieNode** funcStackSize, TrieNode** varStac
 			funcNode->intValue += insertVar(stackPos, curr->condOp.dest, funcNode->intValue, size);
 			break;
 		case IR_RETURN:
-		case IR_PARAM:
 		case IR_ARG:
+		case IR_PARAM:
 		case IR_WRITE:
 			funcNode->intValue += insertVar(stackPos, curr->singleOp.op, funcNode->intValue, size);
 			break;
@@ -127,6 +170,7 @@ void translateIRCode(IRCode* code, FILE* out) {
 	TrieNode* varStackPos = NULL;
 	analyzeStackInfo(code, &funcStackSize, &varStackPos);
 	//traverseTrie(funcStackSize, printNode, NULL);
+	//traverseTrie(varStackPos, printNode, NULL);
 	createHeader(out);
 	createReadFunc(out);
 	createWriteFunc(out);
@@ -134,10 +178,10 @@ void translateIRCode(IRCode* code, FILE* out) {
 	IRCode* curr = head;
 	IRCode* next = curr->next;
 	char* currFuncName = NULL;
-	_translateIRCode(curr, out);
+	_translateIRCode(curr, out, funcStackSize, varStackPos);
 	while (next != head) {
 		curr = next;
 		next = curr->next;
-		_translateIRCode(curr, out);
+		_translateIRCode(curr, out, funcStackSize, varStackPos);
 	}
 }
