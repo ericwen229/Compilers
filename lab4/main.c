@@ -6,6 +6,7 @@
 #include "symboltable.h"
 #include "semantic.h"
 #include "ir.h"
+#include "codegen.h"
 
 extern int yydebug;
 
@@ -48,11 +49,14 @@ int main(int argc, char* argv[]) {
 	if (gError) {
 		return 0;
 	}
-	FILE* out = NULL;
-	if (argc == 2) out = stdout;
-	else out = fopen(argv[2], "w");
-	printIRCode(gIRCode, out);
-	if (argc == 3) fclose(out);
+	printIRCode(gIRCode, stdout);
+	printf("==========\n");
+	translateIRCode(gIRCode, stdout);
+	//FILE* out = NULL;
+	//if (argc == 2) out = stdout;
+	//else out = fopen(argv[2], "w");
+	//printIRCode(gIRCode, out);
+	//if (argc == 3) fclose(out);
 	freeIRCode(gIRCode);
 	freeTree(gTree);
 	freeSymbolTable(gSymbolTable);

@@ -76,6 +76,7 @@ IROperand* createSetAddrOperand(bool isTemp, int varId, int tempId);
 IROperand* createFuncOperand(char* funcName);
 IROperand* createLabelOperand(int labelId);
 IROperand* copyOperand(IROperand* operand);
+void printOperand(IROperand* op, FILE* out);
 void freeOperand(IROperand* operand);
 RelOp convertRelOp(RelopType relOp);
 

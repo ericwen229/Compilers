@@ -53,6 +53,24 @@ char index2Ch(int index) {
 	}
 }
 
+TrieNode* queryNode(TrieNode* node, char* str) {
+	int i = 0;
+	TrieNode* currNode = node;
+	for (i = 0; i < strlen(str); ++ i) {
+		int nextChildIndex = ch2Index(str[i]);
+		if (currNode->child[nextChildIndex] == NULL) {
+			return NULL;
+		}
+		currNode = currNode->child[nextChildIndex];
+	}
+	if (currNode->isEnd) {
+		return currNode;
+	}
+	else {
+		return NULL;
+	}
+}
+
 void* queryTrie(TrieNode* node, char* str) {
 	int i = 0;
 	TrieNode* currNode = node;
