@@ -49,8 +49,8 @@ int main(int argc, char* argv[]) {
 	if (gError) {
 		return 0;
 	}
-	printIRCode(gIRCode, stdout);
-	printf("==========\n");
+	//printIRCode(gIRCode, stdout);
+	//printf("==========\n");
 	translateIRCode(gIRCode, stdout);
 	//FILE* out = NULL;
 	//if (argc == 2) out = stdout;

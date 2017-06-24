@@ -2,6 +2,8 @@
 
 #include "codegen.h"
 
+static int argCount = 0;
+
 void createHeader(FILE* out) {
 	char *header = ".data\n"
 		"  _prompt: .asciiz \"please enter an integer: \"\n"
@@ -12,9 +14,24 @@ void createHeader(FILE* out) {
 }
 
 void createReadFunc(FILE* out) {
+	fprintf(out, "read:\n"
+			"  li $v0, 4\n"
+			"  la $a0, _prompt\n"
+			"  syscall\n"
+			"  li $v0, 5\n"
+			"  syscall\n"
+			"  jr $ra\n");
 }
 
 void createWriteFunc(FILE* out) {
+	fprintf(out, "write:\n"
+			"  li $v0, 1\n"
+			"  syscall\n"
+			"  li $v0, 4\n"
+			"  la $a0, _ret\n"
+			"  syscall\n"
+			"  move $v0, $0\n"
+			"  jr $ra\n");
 }
 
 void getOpName(IROperand* op, char* buffer);
@@ -26,17 +43,17 @@ void loadOperand(IROperand* op, int reg, TrieNode* varStackPos, FILE* out) {
 	else if (op->type == IRO_TEMP || op->type == IRO_VAR) {
 		char varName[20];
 		getOpName(op, varName);
-		fprintf(out, "  lw $t%d, %d($sp)\n", reg, queryNode(varStackPos, varName)->intValue);
+		fprintf(out, "  lw $t%d, -%d($fp)\n", reg, queryNode(varStackPos, varName)->intValue + 4);
 	}
 	else if (op->type == IRO_GETADDR) {
 		char varName[20];
 		getOpName(op, varName);
-		fprintf(out, "  la $t%d, %d($sp)\n", reg, queryNode(varStackPos, varName)->intValue);
+		fprintf(out, "  la $t%d, -%d($fp)\n", reg, queryNode(varStackPos, varName)->intValue + 4);
 	}
 	else if (op->type == IRO_SETADDR) {
 		char varName[20];
 		getOpName(op, varName);
-		fprintf(out, "  lw $t%d, %d($sp)\n", reg, queryNode(varStackPos, varName)->intValue);
+		fprintf(out, "  lw $t%d, -%d($fp)\n", reg, queryNode(varStackPos, varName)->intValue + 4);
 		fprintf(out, "  lw $t%d, 0($t%d)\n", reg, reg);
 	}
 }
@@ -45,20 +62,29 @@ void saveOperand(IROperand* op, int destReg, int backupReg, TrieNode* varStackPo
 	if (op->type == IRO_TEMP || op->type == IRO_VAR) {
 		char varName[20];
 		getOpName(op, varName);
-		fprintf(out, "  sw $t%d, %d($sp)\n", destReg, queryNode(varStackPos, varName)->intValue);
+		fprintf(out, "  sw $t%d, -%d($fp)\n", destReg, queryNode(varStackPos, varName)->intValue + 4);
 	}
 	else if (op->type == IRO_SETADDR) {
 		char varName[20];
 		getOpName(op, varName);
-		fprintf(out, "  la $t%d, %d($sp)\n", backupReg, queryNode(varStackPos, varName)->intValue);
+		fprintf(out, "  lw $t%d, -%d($fp)\n", backupReg, queryNode(varStackPos, varName)->intValue + 4);
 		fprintf(out, "  sw $t%d, 0($t%d)\n", destReg, backupReg);
 	}
 }
 
+int computeParamLeft(IRCode* code) {
+	int count = 1;
+	IRCode* curr = code->next;
+	while (curr->type == IR_PARAM) {
+		++ count;
+		curr = curr->next;
+	}
+	return count;
+}
+
 void _translateIRCode(IRCode* code, FILE* out, TrieNode* funcStackSize, TrieNode* varStackPos) {
-	char buf1[20];
-	char buf2[20];
-	char buf3[20];
+	int paramOffset = 0;
+	char* rel = NULL;
 	switch (code->type) {
 	case IR_LABEL:
 		printOperand(code->singleOp.op, out);
@@ -66,10 +92,10 @@ void _translateIRCode(IRCode* code, FILE* out, TrieNode* funcStackSize, TrieNode
 		break;
 	case IR_FUNC:
 		printOperand(code->singleOp.op, out);
-		fprintf(out, ":\n");
-		fprintf(out, "  addi $sp, $sp, -4\n");
-		fprintf(out, "  sw $fp, 0($sp)\n"); // push $fp
-		fprintf(out, "  move $sp, $fp\n");
+		fprintf(out, ":\n"
+				"  addi $sp, $sp, -4\n"
+				"  sw $fp, 0($sp)\n"
+				"  move $fp, $sp\n");
 		fprintf(out, "  addi $sp, $sp, -%d\n", queryNode(funcStackSize, code->singleOp.op->funcName)->intValue);
 		break;
 	case IR_ASSIGN:
@@ -107,20 +133,70 @@ void _translateIRCode(IRCode* code, FILE* out, TrieNode* funcStackSize, TrieNode
 		fprintf(out, "\n");
 		break;
 	case IR_COND:
+		loadOperand(code->condOp.left, 0, varStackPos, out);
+		loadOperand(code->condOp.right, 1, varStackPos, out);
+		switch (code->condOp.relOp) {
+		case IR_LT: rel = "blt"; break;
+		case IR_LE: rel = "ble"; break;
+		case IR_EQ: rel = "beq"; break;
+		case IR_GE: rel = "bge"; break;
+		case IR_GT: rel = "bgt"; break;
+		case IR_NE: rel = "bne"; break;
+		}
+		fprintf(out, "  %s $t0, $t1, ", rel);
+		printOperand(code->condOp.dest, out);
+		fprintf(out, "\n");
 		break;
 	case IR_RETURN:
+		loadOperand(code->singleOp.op, 0, varStackPos, out);
+		fprintf(out, "  move $v0, $t0\n" // return value
+				"  move $sp, $fp\n" // mov esp, ebp
+				"  lw $fp, 0($sp)\n"
+				"  addi $sp, $sp, 4\n" // pop ebp
+				"  jr $ra\n");
 		break;
 	case IR_DEC:
 		break;
 	case IR_ARG:
+		loadOperand(code->singleOp.op, 0, varStackPos, out);
+		fprintf(out, "  addi $sp, $sp, -4\n"
+				"  sw $t0, 0($sp)\n");
+		++ argCount;
 		break;
 	case IR_CALL:
+		fprintf(out, "  addi $sp, $sp, -4\n"
+				"  sw $ra, 0($sp)\n"); // push $ra
+		fprintf(out, "  jal ");
+		printOperand(code->singleOp.op, out);
+		fprintf(out, "\n"
+				"  move $t0, $v0\n");
+		saveOperand(code->singleOp.dest, 0, 1, varStackPos, out);
+		fprintf(out, "  lw $ra, 0($sp)\n" // pop $ra and arguments
+				"  addi $sp, $sp, %d\n", 4 * (1 + argCount));
+		argCount = 0;
 		break;
 	case IR_PARAM:
+		paramOffset = computeParamLeft(code) + 1;
+		fprintf(out, "  lw $t0, %d($fp)\n", paramOffset * 4); // load argument to stack
+		saveOperand(code->singleOp.op, 0, 1, varStackPos, out);
 		break;
 	case IR_READ:
+		fprintf(out, "  addi $sp, $sp, -4\n"
+				"  sw $ra, 0($sp)\n"
+				"  jal read\n"
+				"  lw $ra, 0($sp)\n"
+				"  addi $sp, $sp, 4\n"
+				"  move $t0, $v0\n");
+		saveOperand(code->singleOp.dest, 0, 1, varStackPos, out);
 		break;
 	case IR_WRITE:
+		loadOperand(code->singleOp.op, 0, varStackPos, out);
+		fprintf(out, "  move $a0, $t0\n"
+				"  addi $sp, $sp, -4\n"
+				"  sw $ra, 0($sp)\n"
+				"  jal write\n"
+				"  lw $ra, 0($sp)\n"
+				"  addi $sp, $sp, 4\n");
 		break;
 	}
 }
