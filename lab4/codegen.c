@@ -202,12 +202,7 @@ void _translateIRCode(IRCode* code, FILE* out, TrieNode* funcStackSize, TrieNode
 }
 
 void getOpName(IROperand* op, char* buffer) {
-	if (op->type == IRO_CONST
-			|| op->type == IRO_FUNC
-			|| op->type == IRO_LABEL) {
-		printf("ERROR: no name available");
-	}
-	else if (op->type == IRO_TEMP
+	if (op->type == IRO_TEMP
 			|| (op->type != IRO_VAR && op->isTemp)) {
 		sprintf(buffer, "t%d", op->tempId);
 	}
