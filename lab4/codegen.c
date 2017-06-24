@@ -7,7 +7,7 @@ void createHeader(FILE* out) {
 		"  _prompt: .asciiz \"please enter an integer: \"\n"
 		"  _ret: .asciiz \"\\n\"\n"
 		"  .globl main\n"
-		"  .text\n";
+		".text\n";
 	fprintf(out, "%s", header);
 }
 
@@ -17,12 +17,52 @@ void createReadFunc(FILE* out) {
 void createWriteFunc(FILE* out) {
 }
 
+void getOpName(IROperand* op, char* buffer);
+
+void loadOperand(IROperand* op, int reg, TrieNode* varStackPos, FILE* out) {
+	if (op->type == IRO_CONST) {
+		fprintf(out, "  li $t%d, %d\n", reg, op->constValue);
+	}
+	else if (op->type == IRO_TEMP || op->type == IRO_VAR) {
+		char varName[20];
+		getOpName(op, varName);
+		fprintf(out, "  lw $t%d, %d($sp)\n", reg, queryNode(varStackPos, varName)->intValue);
+	}
+	else if (op->type == IRO_GETADDR) {
+		char varName[20];
+		getOpName(op, varName);
+		fprintf(out, "  la $t%d, %d($sp)\n", reg, queryNode(varStackPos, varName)->intValue);
+	}
+	else if (op->type == IRO_SETADDR) {
+		char varName[20];
+		getOpName(op, varName);
+		fprintf(out, "  lw $t%d, %d($sp)\n", reg, queryNode(varStackPos, varName)->intValue);
+		fprintf(out, "  lw $t%d, 0($t%d)\n", reg, reg);
+	}
+}
+
+void saveOperand(IROperand* op, int destReg, int backupReg, TrieNode* varStackPos, FILE* out) {
+	if (op->type == IRO_TEMP || op->type == IRO_VAR) {
+		char varName[20];
+		getOpName(op, varName);
+		fprintf(out, "  sw $t%d, %d($sp)\n", destReg, queryNode(varStackPos, varName)->intValue);
+	}
+	else if (op->type == IRO_SETADDR) {
+		char varName[20];
+		getOpName(op, varName);
+		fprintf(out, "  la $t%d, %d($sp)\n", backupReg, queryNode(varStackPos, varName)->intValue);
+		fprintf(out, "  sw $t%d, 0($t%d)\n", destReg, backupReg);
+	}
+}
+
 void _translateIRCode(IRCode* code, FILE* out, TrieNode* funcStackSize, TrieNode* varStackPos) {
 	char buf1[20];
 	char buf2[20];
 	char buf3[20];
 	switch (code->type) {
 	case IR_LABEL:
+		printOperand(code->singleOp.op, out);
+		fprintf(out, ":\n");
 		break;
 	case IR_FUNC:
 		printOperand(code->singleOp.op, out);
@@ -33,16 +73,38 @@ void _translateIRCode(IRCode* code, FILE* out, TrieNode* funcStackSize, TrieNode
 		fprintf(out, "  addi $sp, $sp, -%d\n", queryNode(funcStackSize, code->singleOp.op->funcName)->intValue);
 		break;
 	case IR_ASSIGN:
+		loadOperand(code->singleOp.op, 0, varStackPos, out);
+		saveOperand(code->singleOp.dest, 0, 1, varStackPos, out);
 		break;
 	case IR_ADD:
+		loadOperand(code->binOp.left, 0, varStackPos, out);
+		loadOperand(code->binOp.right, 1, varStackPos, out);
+		fprintf(out, "  add $t0, $t0, $t1\n");
+		saveOperand(code->binOp.dest, 0, 1, varStackPos, out);
 		break;
 	case IR_MINUS:
+		loadOperand(code->binOp.left, 0, varStackPos, out);
+		loadOperand(code->binOp.right, 1, varStackPos, out);
+		fprintf(out, "  sub $t0, $t0, $t1\n");
+		saveOperand(code->binOp.dest, 0, 1, varStackPos, out);
 		break;
 	case IR_STAR:
+		loadOperand(code->binOp.left, 0, varStackPos, out);
+		loadOperand(code->binOp.right, 1, varStackPos, out);
+		fprintf(out, "  mul $t0, $t0, $t1\n");
+		saveOperand(code->binOp.dest, 0, 1, varStackPos, out);
 		break;
 	case IR_DIV:
+		loadOperand(code->binOp.left, 0, varStackPos, out);
+		loadOperand(code->binOp.right, 1, varStackPos, out);
+		fprintf(out, "  div $t0, $t1\n");
+		fprintf(out, "  mflo $t0\n");
+		saveOperand(code->binOp.dest, 0, 1, varStackPos, out);
 		break;
 	case IR_GOTO:
+		fprintf(out, "  j ");
+		printOperand(code->singleOp.op, out);
+		fprintf(out, "\n");
 		break;
 	case IR_COND:
 		break;
