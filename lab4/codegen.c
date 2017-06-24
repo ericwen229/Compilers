@@ -238,6 +238,10 @@ void printNode(TrieNode* node) {
 	free(name);
 }
 
+void freeNode(TrieNode* node) {
+	free(node);
+}
+
 void analyzeStackInfo(IRCode* code, TrieNode** funcStackSize, TrieNode** varStackPos) {
 	TrieNode* stackSize = initTrieNode(NULL, -1);
 	TrieNode* stackPos = initTrieNode(NULL, -1);
@@ -317,4 +321,6 @@ void translateIRCode(IRCode* code, FILE* out) {
 		next = curr->next;
 		_translateIRCode(curr, out, funcStackSize, varStackPos);
 	}
+	traverseTrie(funcStackSize, NULL, freeNode);
+	traverseTrie(varStackPos, NULL, freeNode);
 }
